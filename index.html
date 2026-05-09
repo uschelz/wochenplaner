@@ -129,7 +129,7 @@ add(corpusChristi,"Fronleichnam");
 return holidays;
 }
 
-// ===== FERIEN BIS 2030 =====
+// ===== FERIEN (BAYERN BIS 2030) =====
 function getVacations(year){
 const ferien = {
 
@@ -187,58 +187,3 @@ start: new Date(f[0]),
 end: new Date(f[1])
 }));
 }
-
-// ===== REST IST UNVERÄNDERT =====
-function getMonday(d){
-d=new Date(d);
-let day=d.getDay();
-let diff=d.getDate()-day+(day===0?-6:1);
-return new Date(d.setDate(diff));
-}
-
-function formatDate(d){return d.toLocaleDateString("de-DE");}
-
-function createDay(name,date){
-let div=document.createElement("div");
-div.className="day";
-
-let holidays=getHolidays(date.getFullYear());
-let dateStr=formatDate(date);
-
-let vacations = getVacations(date.getFullYear());
-let isVacation = vacations.some(v => date >= v.start && date <= v.end);
-
-let today = new Date();
-
-if(
-date.getFullYear() === today.getFullYear() &&
-date.getMonth() === today.getMonth() &&
-date.getDate() === today.getDate()
-){
-div.classList.add("today");
-}
-
-let header=document.createElement("div");
-header.innerText=name+" ("+dateStr+")";
-
-if(isVacation){
-header.innerText+=" – Ferien";
-div.classList.add("vacation");
-}
-
-if(holidays[dateStr]){
-header.innerText+=" – "+holidays[dateStr];
-div.classList.add("holiday");
-}
-
-let ta=document.createElement("textarea");
-let key="plan_"+dateStr;
-ta.value=localStorage.getItem(key)||"";
-ta.oninput=()=>localStorage.setItem(key,ta.value);
-
-div.appendChild(header);
-div.appendChild(ta);
-return div;
-}
-
-// (Rest bleibt unverändert)
