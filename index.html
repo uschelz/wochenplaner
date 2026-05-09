@@ -238,6 +238,12 @@ base.setDate(base.getDate()+weekOffset*7);
 
 let monday=getMonday(base);
 
+let sunday=new Date(monday);
+sunday.setDate(monday.getDate()+6);
+
+document.getElementById("title").innerText =
+formatDate(monday)+" – "+formatDate(sunday);
+
 let left=document.getElementById("left");
 let right=document.getElementById("right");
 
@@ -325,17 +331,25 @@ cell.style.padding="6px";
 let key=formatDate(date);
 let isVacation=vacations.some(v=>date>=v.start && date<=v.end);
 
-if(isVacation) cell.style.background="#b6f2b6";
-if(holidays[key]) cell.style.background="#ffcccc";
-if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
-
+// ===== FIX HIER =====
 cell.onclick=()=>{
-let today=new Date();
-let diff=Math.floor((date-today)/(1000*60*60*24));
-weekOffset=Math.floor(diff/7);
+let selectedMonday = getMonday(date);
+let currentMonday = getMonday(new Date());
+
+let diff = Math.round(
+(selectedMonday - currentMonday) / (1000*60*60*24*7)
+);
+
+weekOffset = diff;
+
 render();
 toggleCalendar();
 };
+// =====================
+
+if(isVacation) cell.style.background="#b6f2b6";
+if(holidays[key]) cell.style.background="#ffcccc";
+if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
 
 grid.appendChild(cell);
 }
