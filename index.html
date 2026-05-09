@@ -33,6 +33,7 @@ background-size:100% 24px;
 
 .today {outline:2px solid red;}
 .holiday {background:#ffe0e0;}
+.vacation {background:#e6ffe6;}
 
 .shadow {
 position:absolute;top:0;left:0;width:100%;height:100%;
@@ -130,6 +131,27 @@ add(corpusChristi,"Fronleichnam");
 return holidays;
 }
 
+// ===== FERIEN =====
+function getVacations(year){
+const ferien = {
+2026: [
+["2026-02-16","2026-02-20"],
+["2026-03-30","2026-04-10"],
+["2026-05-26","2026-06-05"],
+["2026-08-03","2026-09-14"],
+["2026-11-02","2026-11-06"],
+["2026-12-24","2027-01-08"]
+]
+};
+
+if(!ferien[year]) return [];
+
+return ferien[year].map(f => ({
+start: new Date(f[0]),
+end: new Date(f[1])
+}));
+}
+
 // ===== PLANER =====
 function getMonday(d){
 d=new Date(d);
@@ -146,6 +168,10 @@ div.className="day";
 
 let holidays=getHolidays(date.getFullYear());
 let dateStr=formatDate(date);
+
+let vacations = getVacations(date.getFullYear());
+let isVacation = vacations.some(v => date >= v.start && date <= v.end);
+
 let today = new Date();
 
 if(
@@ -155,8 +181,14 @@ if(
 ){
     div.classList.add("today");
 }
+
 let header=document.createElement("div");
 header.innerText=name+" ("+dateStr+")";
+
+if(isVacation){
+header.innerText+=" – Ferien";
+div.classList.add("vacation");
+}
 
 if(holidays[dateStr]){
 header.innerText+=" – "+holidays[dateStr];
@@ -230,10 +262,7 @@ if(el.style.display==="block"){
 el.style.display="none";
 }else{
 el.style.display="block";
-
-/* 👉 FIX: immer aktueller Monat */
 calDate = new Date();
-
 renderCalendar();
 }
 }
