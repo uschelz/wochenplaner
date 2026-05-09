@@ -134,18 +134,7 @@ if(!ferien[year]) return [];
 return ferien[year].map(r=>({start:normalize(new Date(r[0])),end:normalize(new Date(r[1]))}));
 }
 
-// ===== PLANER =====
-function getMonday(d){
-d=new Date(d);
-let day=d.getDay();
-let diff=d.getDate()-day+(day===0?-6:1);
-return new Date(d.setDate(diff));
-}
-
-function formatDate(d){return d.toLocaleDateString("de-DE");}
-
-// (Rest bleibt identisch…)
-
+// ===== MINI-KALENDER =====
 function renderCalendar(){
 let grid=document.getElementById("calendarGrid");
 grid.innerHTML="";
@@ -155,9 +144,6 @@ let vacations=[...getVacations(calDate.getFullYear()),...getVacations(calDate.ge
 
 let year=calDate.getFullYear();
 let month=calDate.getMonth();
-
-document.getElementById("monthTitle").innerText=
-calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
 
 let first=new Date(year,month,1);
 let start=first.getDay()||7;
@@ -178,7 +164,7 @@ let isVacation=vacations.some(v=>date>=v.start && date<=v.end);
 let hasEntry=localStorage.getItem("plan_"+key);
 let isHoliday=holidays[key];
 
-// ===== NEUE DIAGONALE LOGIK =====
+// 👉 NEUE FARBLOGIK
 if(isVacation && isHoliday && hasEntry){
 cell.style.background="linear-gradient(135deg,#b6f2b6 33%,#ffcccc 33%,#ffcccc 66%,#a0d8ff 66%)";
 }
@@ -213,7 +199,7 @@ grid.appendChild(cell);
 }
 }
 
-// ===== START =====
+// START
 render();
 </script>
 
