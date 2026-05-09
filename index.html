@@ -24,10 +24,47 @@ background-size:100% 24px;}
 </head>
 
 <body>
+<div id="calendarOverlay" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.5);
+display:none;
+z-index:1000;
+">
 
+<div style="
+background:white;
+margin:50px auto;
+padding:10px;
+width:90%;
+max-width:350px;
+border-radius:10px;
+">
+
+<div style="display:flex;justify-content:space-between;">
+<button onclick="changeMonth(-1)">←</button>
+<div id="monthTitle"></div>
+<button onclick="changeMonth(1)">→</button>
+</div>
+
+<div id="calendarGrid" style="
+display:grid;
+grid-template-columns:repeat(7,1fr);
+gap:4px;
+margin-top:10px;
+"></div>
+
+<button onclick="toggleCalendar()" style="margin-top:10px;width:100%;">Schließen</button>
+
+</div>
+</div>
 <div class="header">
 <button onclick="changeWeek(-1)">←</button>
 <div id="title"></div>
+  <button onclick="toggleCalendar()">📅</button>
 <div>
 <button onclick="goToday()">Heute</button>
 <button onclick="changeWeek(1)">→</button>
@@ -208,7 +245,66 @@ function renderCalendar(){
     grid.appendChild(cell);
   }
 }
-render();
+let calDate = new Date();
+
+function toggleCalendar(){
+  let el = document.getElementById("calendarOverlay");
+  if(el.style.display==="none"){
+    el.style.display="block";
+    renderCalendar();
+  } else {
+    el.style.display="none";
+  }
+}
+
+function changeMonth(n){
+  calDate.setMonth(calDate.getMonth()+n);
+  renderCalendar();
+}
+
+function renderCalendar(){
+  let grid=document.getElementById("calendarGrid");
+  grid.innerHTML="";
+
+  let year=calDate.getFullYear();
+  let month=calDate.getMonth();
+
+  document.getElementById("monthTitle").innerText=
+    calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
+
+  let first=new Date(year,month,1);
+  let start=first.getDay()||7;
+  let days=new Date(year,month+1,0).getDate();
+
+  for(let i=1;i<start;i++){
+    grid.appendChild(document.createElement("div"));
+  }
+
+  for(let d=1;d<=days;d++){
+    let date=new Date(year,month,d);
+    let cell=document.createElement("div");
+    cell.innerText=d;
+    cell.style.textAlign="center";
+    cell.style.padding="6px";
+
+    let key="plan_"+date.toLocaleDateString("de-DE");
+
+    if(localStorage.getItem(key)){
+      cell.style.background="#a0d8ff";
+    }
+
+    cell.onclick=()=>{
+      let today=new Date();
+      let diff=Math.floor((date-today)/(1000*60*60*24));
+      weekOffset=Math.floor(diff/7);
+      render();
+      toggleCalendar();
+    };
+
+    grid.appendChild(cell);
+  }
+}
+  render();
 renderCalendar();
 };
 reader.readAsText(e.target.files[0]);
