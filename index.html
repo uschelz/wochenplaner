@@ -14,9 +14,11 @@ body {margin:0;font-family:-apple-system;background:#eaeaea;}
 .page#right {flex:0.8;}
 .spine {width:4px;background:#ccc;}
 .day {flex:1;display:flex;flex-direction:column;}
-textarea {flex:1;border:none;font-size:14px;
+textarea {
+flex:1;border:none;font-size:14px;
 background-image:linear-gradient(to bottom,transparent 95%,#ddd 95%);
-background-size:100% 24px;}
+background-size:100% 24px;
+}
 .today {outline:2px solid red;}
 .holiday {background:#ffe0e0;}
 .vacation {background:#e6ffe6;}
@@ -135,9 +137,6 @@ return new Date(d.setDate(diff));
 function createDay(name,date){
 let div=document.createElement("div");
 let key=getKey(date);
-
-let header=document.createElement("div");
-
 let holidays=getHolidays(date.getFullYear());
 
 let text=name+" ("+date.toLocaleDateString("de-DE")+")";
@@ -152,12 +151,12 @@ div.classList.add("holiday");
 text+=" – "+holidays[key];
 }
 
-header.innerText=text;
-
-// HEUTE
 if(getKey(new Date())===key){
 div.classList.add("today");
 }
+
+let header=document.createElement("div");
+header.innerText=text;
 
 let ta=document.createElement("textarea");
 ta.value=localStorage.getItem("plan_"+key)||"";
@@ -222,7 +221,7 @@ let key=getKey(date);
 let cell=document.createElement("div");
 cell.innerText=d;
 
-// Reihenfolge korrekt
+// Reihenfolge
 if(isVacation(date)) cell.style.background="#b6f2b6";
 if(holidays[key]) cell.style.background="#ffcccc";
 if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
