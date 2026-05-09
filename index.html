@@ -8,8 +8,8 @@
 
 <style>
 body {margin:0;font-family:-apple-system;background:#eaeaea;}
-.header {display:flex;justify-content:space-between;padding:10px;background:white;}
-.book {display:flex;height:calc(100vh - 100px);}
+.header {display:flex;justify-content:space-between;padding:10px;background:white;align-items:center;}
+.book {display:flex;height:calc(100vh - 80px);}
 .page {padding:8px;background:white;display:flex;flex-direction:column;gap:8px;}
 .page#left {flex:1.2;}
 .page#right {flex:0.8;}
@@ -19,30 +19,20 @@ textarea {flex:1;border:none;font-size:14px;
 background-image:linear-gradient(to bottom,transparent 95%,#ddd 95%);
 background-size:100% 24px;}
 .today {outline:2px solid red;}
-.notice {text-align:center;font-size:12px;background:#ffeaa7;}
+button {font-size:16px;padding:6px 10px;}
 </style>
 </head>
 
 <body>
-<div id="calendarOverlay" style="
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.5);
-display:none;
-z-index:1000;
-">
 
+<!-- OVERLAY KALENDER -->
+<div id="calendarOverlay" style="
+position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.5);
+display:none;z-index:1000;">
 <div style="
-background:white;
-margin:50px auto;
-padding:10px;
-width:90%;
-max-width:350px;
-border-radius:10px;
-">
+background:white;margin:50px auto;padding:10px;
+width:90%;max-width:350px;border-radius:10px;">
 
 <div style="display:flex;justify-content:space-between;">
 <button onclick="changeMonth(-1)">←</button>
@@ -51,49 +41,42 @@ border-radius:10px;
 </div>
 
 <div id="calendarGrid" style="
-display:grid;
-grid-template-columns:repeat(7,1fr);
-gap:4px;
-margin-top:10px;
-"></div>
+display:grid;grid-template-columns:repeat(7,1fr);
+gap:4px;margin-top:10px;"></div>
 
 <button onclick="toggleCalendar()" style="margin-top:10px;width:100%;">Schließen</button>
+</div>
+</div>
 
-</div>
-</div>
+<!-- HEADER -->
 <div class="header">
 <button onclick="changeWeek(-1)">←</button>
 <div id="title"></div>
-  <button onclick="toggleCalendar()">📅</button>
+<button onclick="toggleCalendar()">📅</button>
 <div>
 <button onclick="goToday()">Heute</button>
 <button onclick="changeWeek(1)">→</button>
 </div>
 </div>
-<div id="miniCalendar" style="background:white;padding:5px;font-size:12px;">
-  <div style="display:flex;justify-content:space-between;">
-    <button onclick="changeMonth(-1)">←</button>
-    <div id="monthTitle"></div>
-    <button onclick="changeMonth(1)">→</button>
-  </div>
-  <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
-</div>
-<div class="notice" id="notice"></div>
 
+<!-- PLANER -->
 <div class="book">
 <div class="page" id="left"></div>
 <div class="spine"></div>
 <div class="page" id="right"></div>
 </div>
 
-<div style="position:fixed;bottom:10px;width:100%;">
+<!-- BACKUP -->
+<div style="position:fixed;bottom:10px;width:100%;text-align:center;">
 <button onclick="backup()">⚡ Backup</button>
 <button onclick="loadBackup()">Laden</button>
 </div>
 
 <script>
-let weekOffset=0;
+let weekOffset = 0;
+let calDate = new Date();
 
+// ===== PLANER =====
 function getMonday(d){
 d=new Date(d);
 let day=d.getDay();
@@ -114,7 +97,7 @@ let ta=document.createElement("textarea");
 let key="plan_"+formatDate(date);
 ta.value=localStorage.getItem(key)||"";
 
-ta.oninput=()=>{localStorage.setItem(key,ta.value);};
+ta.oninput=()=>localStorage.setItem(key,ta.value);
 
 if(formatDate(new Date())===formatDate(date)&&weekOffset===0){
 div.classList.add("today");
@@ -154,6 +137,7 @@ date.setDate(monday.getDate()+i+3);
 right.appendChild(createDay(d,date));
 });
 
+// Wochenende untereinander
 let weekend=document.createElement("div");
 weekend.style.display="flex";
 weekend.style.flexDirection="column";
@@ -180,6 +164,7 @@ right.appendChild(weekend);
 function changeWeek(n){weekOffset+=n;render();}
 function goToday(){weekOffset=0;render();}
 
+// ===== BACKUP =====
 function backup(){
 let data=JSON.stringify(localStorage);
 let blob=new Blob([data],{type:"text/plain"});
@@ -197,121 +182,69 @@ let reader=new FileReader();
 reader.onload=e=>{
 let data=JSON.parse(e.target.result);
 for(let key in data){localStorage.setItem(key,data[key]);}
-let calDate = new Date();
-
-function changeMonth(n){
-  calDate.setMonth(calDate.getMonth()+n);
-  renderCalendar();
-}
-
-function renderCalendar(){
-  let grid=document.getElementById("calendarGrid");
-  grid.innerHTML="";
-
-  let year=calDate.getFullYear();
-  let month=calDate.getMonth();
-
-  document.getElementById("monthTitle").innerText=
-    calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
-
-  let first=new Date(year,month,1);
-  let start=first.getDay()||7;
-  let days=new Date(year,month+1,0).getDate();
-
-  for(let i=1;i<start;i++){
-    grid.appendChild(document.createElement("div"));
-  }
-
-  for(let d=1;d<=days;d++){
-    let date=new Date(year,month,d);
-    let cell=document.createElement("div");
-    cell.innerText=d;
-    cell.style.textAlign="center";
-    cell.style.padding="4px";
-
-    let key="plan_"+date.toLocaleDateString("de-DE");
-
-    if(localStorage.getItem(key)){
-      cell.style.background="#a0d8ff"; // blau
-    }
-
-    cell.onclick=()=>{
-      let today=new Date();
-      let diff=Math.floor((date-today)/(1000*60*60*24));
-      weekOffset=Math.floor(diff/7);
-      render();
-    };
-
-    grid.appendChild(cell);
-  }
-}
-let calDate = new Date();
-
-function toggleCalendar(){
-  let el = document.getElementById("calendarOverlay");
-  if(el.style.display==="none"){
-    el.style.display="block";
-    renderCalendar();
-  } else {
-    el.style.display="none";
-  }
-}
-
-function changeMonth(n){
-  calDate.setMonth(calDate.getMonth()+n);
-  renderCalendar();
-}
-
-function renderCalendar(){
-  let grid=document.getElementById("calendarGrid");
-  grid.innerHTML="";
-
-  let year=calDate.getFullYear();
-  let month=calDate.getMonth();
-
-  document.getElementById("monthTitle").innerText=
-    calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
-
-  let first=new Date(year,month,1);
-  let start=first.getDay()||7;
-  let days=new Date(year,month+1,0).getDate();
-
-  for(let i=1;i<start;i++){
-    grid.appendChild(document.createElement("div"));
-  }
-
-  for(let d=1;d<=days;d++){
-    let date=new Date(year,month,d);
-    let cell=document.createElement("div");
-    cell.innerText=d;
-    cell.style.textAlign="center";
-    cell.style.padding="6px";
-
-    let key="plan_"+date.toLocaleDateString("de-DE");
-
-    if(localStorage.getItem(key)){
-      cell.style.background="#a0d8ff";
-    }
-
-    cell.onclick=()=>{
-      let today=new Date();
-      let diff=Math.floor((date-today)/(1000*60*60*24));
-      weekOffset=Math.floor(diff/7);
-      render();
-      toggleCalendar();
-    };
-
-    grid.appendChild(cell);
-  }
-}
-  render();
-renderCalendar();
+render();
 };
 reader.readAsText(e.target.files[0]);
 };
 input.click();
 }
 
+// ===== KALENDER =====
+function toggleCalendar(){
+let el=document.getElementById("calendarOverlay");
+el.style.display = (el.style.display==="block") ? "none" : "block";
+renderCalendar();
+}
+
+function changeMonth(n){
+calDate.setMonth(calDate.getMonth()+n);
+renderCalendar();
+}
+
+function renderCalendar(){
+let grid=document.getElementById("calendarGrid");
+grid.innerHTML="";
+
+let year=calDate.getFullYear();
+let month=calDate.getMonth();
+
+document.getElementById("monthTitle").innerText=
+calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
+
+let first=new Date(year,month,1);
+let start=first.getDay()||7;
+let days=new Date(year,month+1,0).getDate();
+
+for(let i=1;i<start;i++){
+grid.appendChild(document.createElement("div"));
+}
+
+for(let d=1;d<=days;d++){
+let date=new Date(year,month,d);
+let cell=document.createElement("div");
+cell.innerText=d;
+cell.style.textAlign="center";
+cell.style.padding="6px";
+
+let key="plan_"+date.toLocaleDateString("de-DE");
+
+if(localStorage.getItem(key)){
+cell.style.background="#a0d8ff";
+}
+
+cell.onclick=()=>{
+let today=new Date();
+let diff=Math.floor((date-today)/(1000*60*60*24));
+weekOffset=Math.floor(diff/7);
+render();
+toggleCalendar();
+};
+
+grid.appendChild(cell);
+}
+}
+
+// START
 render();
 </script>
 
