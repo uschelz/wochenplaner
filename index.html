@@ -87,6 +87,63 @@ function normalize(d){
 return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
+// ===== MINI-KALENDER =====
+function toggleCalendar(){
+let el=document.getElementById("calendarOverlay");
+
+if(el.style.display==="block"){
+el.style.display="none";
+}else{
+el.style.display="block";
+
+// 👉 Reset auf aktuellen Monat
+calDate = new Date();
+
+renderCalendar();
+}
+}
+
+function changeMonth(n){
+calDate.setMonth(calDate.getMonth()+n);
+renderCalendar();
+}
+
+function renderCalendar(){
+let grid=document.getElementById("calendarGrid");
+grid.innerHTML="";
+
+let year=calDate.getFullYear();
+let month=calDate.getMonth();
+
+document.getElementById("monthTitle").innerText=
+calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
+
+let first=new Date(year,month,1);
+let start=(first.getDay()+6)%7;
+let days=new Date(year,month+1,0).getDate();
+
+for(let i=0;i<start;i++){
+grid.appendChild(document.createElement("div"));
+}
+
+for(let d=1;d<=days;d++){
+let date=new Date(year,month,d);
+
+let cell=document.createElement("div");
+cell.innerText=d;
+
+cell.onclick=()=>{
+let mondayClicked=getMonday(date);
+let mondayToday=getMonday(new Date());
+weekOffset=Math.round((mondayClicked-mondayToday)/(1000*60*60*24*7));
+render();
+toggleCalendar();
+};
+
+grid.appendChild(cell);
+}
+}
+
 // ===== FEIERTAGE =====
 function getEaster(year){
 let f=Math.floor,G=year%19,C=f(year/100);
