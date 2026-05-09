@@ -105,7 +105,7 @@ function add(date,name){
 holidays[date.toLocaleDateString("de-DE")] = name;
 }
 
-// feste Feiertage
+// feste
 add(new Date(year,0,1),"Neujahr");
 add(new Date(year,0,6),"Heilige Drei Könige");
 add(new Date(year,4,1),"Tag der Arbeit");
@@ -114,7 +114,7 @@ add(new Date(year,10,1),"Allerheiligen");
 add(new Date(year,11,25),"1. Weihnachtstag");
 add(new Date(year,11,26),"2. Weihnachtstag");
 
-// bewegliche
+// beweglich
 let goodFriday=new Date(easter); goodFriday.setDate(easter.getDate()-2);
 let easterMon=new Date(easter); easterMon.setDate(easter.getDate()+1);
 let ascension=new Date(easter); ascension.setDate(easter.getDate()+39);
@@ -153,6 +153,12 @@ header.innerText=name+" ("+dateStr+")";
 if(holidays[dateStr]){
 header.innerText+=" – "+holidays[dateStr];
 div.classList.add("holiday");
+}
+
+// 👉 HEUTE MARKIERUNG
+let today = new Date();
+if(formatDate(today) === dateStr && weekOffset === 0){
+div.classList.add("today");
 }
 
 let ta=document.createElement("textarea");
@@ -243,6 +249,8 @@ let days=new Date(year,month+1,0).getDate();
 
 for(let i=1;i<start;i++) grid.appendChild(document.createElement("div"));
 
+let today = new Date();
+
 for(let d=1;d<=days;d++){
 let date=new Date(year,month,d);
 let cell=document.createElement("div");
@@ -252,12 +260,19 @@ cell.style.padding="6px";
 
 let key=formatDate(date);
 
+// Feiertag
 if(holidays[key]) cell.style.background="#ffcccc";
 
+// Termin
 if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
 
+// 👉 HEUTE (höchste Priorität)
+if(formatDate(date) === formatDate(today)){
+cell.style.border = "2px solid red";
+cell.style.borderRadius = "50%";
+}
+
 cell.onclick=()=>{
-let today=new Date();
 let diff=Math.floor((date-today)/(1000*60*60*24));
 weekOffset=Math.floor(diff/7);
 render();
@@ -293,7 +308,7 @@ reader.readAsText(e.target.files[0]);
 input.click();
 }
 
-// ===== BLÄTTERN (stabil) =====
+// ===== BLÄTTERN =====
 let startX=0,currentX=0,isDragging=false;
 const wrapper=document.getElementById("pageWrapper");
 const shadow=document.getElementById("shadow");
