@@ -8,7 +8,7 @@
 <style>
 body {margin:0;font-family:-apple-system;background:#eaeaea;}
 .header {display:flex;justify-content:space-between;padding:10px;background:white;}
-.book {display:flex;height:calc(100vh - 120px);}
+.book {display:flex;height:calc(100vh - 120px);transition:transform .3s ease;}
 .page {padding:8px;background:white;display:flex;flex-direction:column;gap:8px;}
 .page#left {flex:1.2;}
 .page#right {flex:0.8;}
@@ -51,7 +51,6 @@ background:rgba(0,0,0,0.5);display:none;z-index:9999;">
 </div>
 </div>
 
-<!-- PLANER -->
 <div class="book" id="book">
 <div class="page" id="left"></div>
 <div class="spine"></div>
@@ -66,10 +65,10 @@ background:rgba(0,0,0,0.5);display:none;z-index:9999;">
 <script>
 let weekOffset=0;
 let calDate=new Date();
+let startX=0,currentX=0,isDragging=false;
 
-// ===== BASIS =====
-function normalize(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
-function formatDate(d){return d.toLocaleDateString("de-DE");}
+// ===== KEY =====
+function getKey(d){return d.toISOString().split("T")[0];}
 
 // ===== FEIERTAGE =====
 function getEaster(y){
@@ -86,7 +85,7 @@ return new Date(y,m-1,d);
 function getHolidays(y){
 let e=getEaster(y);
 let h={};
-const add=(d,n)=>h[formatDate(d)]=n;
+const add=(d,n)=>h[getKey(d)]=n;
 
 add(new Date(y,0,1),"Neujahr");
 add(new Date(y,0,6),"Heilige Drei Könige");
@@ -122,8 +121,7 @@ const vacations=[
 ].map(v=>({start:new Date(v[0]),end:new Date(v[1])}));
 
 function isVacation(date){
-let d=normalize(date);
-return vacations.some(v=>d>=normalize(v.start)&&d<=normalize(v.end));
+return vacations.some(v=>date>=v.start&&date<=v.end);
 }
 
 // ===== PLANER =====
@@ -136,22 +134,19 @@ return new Date(d.setDate(diff));
 
 function createDay(name,date){
 let div=document.createElement("div");
-div.className="day";
+let key=getKey(date);
 
 let header=document.createElement("div");
-header.innerText=name+" ("+formatDate(date)+")";
-
-if(isVacation(date)){div.classList.add("vacation");}
+header.innerText=name+" ("+date.toLocaleDateString("de-DE")+")";
 
 let holidays=getHolidays(date.getFullYear());
-if(holidays[formatDate(date)]){div.classList.add("holiday");}
 
-if(formatDate(new Date())===formatDate(date)) div.classList.add("today");
+if(isVacation(date)) div.classList.add("vacation");
+if(holidays[key]) div.classList.add("holiday");
 
 let ta=document.createElement("textarea");
-let key="plan_"+formatDate(date);
-ta.value=localStorage.getItem(key)||"";
-ta.oninput=()=>localStorage.setItem(key,ta.value);
+ta.value=localStorage.getItem("plan_"+key)||"";
+ta.oninput=()=>localStorage.setItem("plan_"+key,ta.value);
 
 div.appendChild(header);
 div.appendChild(ta);
@@ -163,10 +158,6 @@ let base=new Date();
 base.setDate(base.getDate()+weekOffset*7);
 
 let monday=getMonday(base);
-let sunday=new Date(monday);
-sunday.setDate(monday.getDate()+6);
-
-document.getElementById("title").innerText=formatDate(monday)+" – "+formatDate(sunday);
 
 let left=document.getElementById("left");
 let right=document.getElementById("right");
@@ -193,7 +184,7 @@ if(el.style.display==="block") renderCalendar();
 }
 
 function changeMonth(n){
-calDate=new Date(calDate.getFullYear(),calDate.getMonth()+n,1);
+calDate.setMonth(calDate.getMonth()+n);
 renderCalendar();
 }
 
@@ -211,12 +202,12 @@ for(let i=0;i<start;i++) grid.appendChild(document.createElement("div"));
 
 for(let d=1;d<=days;d++){
 let date=new Date(calDate.getFullYear(),calDate.getMonth(),d);
+let key=getKey(date);
+
 let cell=document.createElement("div");
 cell.innerText=d;
 
-let key=formatDate(date);
-
-// 🎯 Reihenfolge!
+// Reihenfolge
 if(isVacation(date)) cell.style.background="#b6f2b6";
 if(holidays[key]) cell.style.background="#ffcccc";
 if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
@@ -236,6 +227,41 @@ grid.appendChild(cell);
 // ===== NAV =====
 function changeWeek(n){weekOffset+=n;render();}
 function goToday(){weekOffset=0;render();}
+
+// ===== SWIPE (WIEDER AKTIV!) =====
+const book=document.getElementById("book");
+
+book.addEventListener("touchstart",e=>{
+if(e.target.closest("textarea")) return;
+startX=e.touches[0].clientX;
+isDragging=true;
+});
+
+book.addEventListener("touchmove",e=>{
+if(!isDragging) return;
+currentX=e.touches[0].clientX;
+book.style.transform="translateX("+(currentX-startX)+"px)";
+});
+
+book.addEventListener("touchend",()=>{
+if(!isDragging) return;
+
+let diff=currentX-startX;
+
+if(diff<-80){
+book.style.transform="translateX(-100%)";
+setTimeout(()=>{changeWeek(1);book.style.transform="translateX(0)";},200);
+}
+else if(diff>80){
+book.style.transform="translateX(100%)";
+setTimeout(()=>{changeWeek(-1);book.style.transform="translateX(0)";},200);
+}
+else{
+book.style.transform="translateX(0)";
+}
+
+isDragging=false;
+});
 
 // ===== BACKUP =====
 function backup(){
