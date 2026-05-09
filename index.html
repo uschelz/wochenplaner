@@ -46,7 +46,6 @@ button {font-size:16px;padding:6px 10px;}
 
 <body>
 
-<!-- MINI-KALENDER -->
 <div id="calendarOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;z-index:1000;">
 <div style="background:white;margin:50px auto;padding:10px;width:90%;max-width:350px;border-radius:10px;">
 <div style="display:flex;justify-content:space-between;">
@@ -62,9 +61,7 @@ button {font-size:16px;padding:6px 10px;}
 <div class="header">
 <button onclick="changeWeek(-1)">←</button>
 <div id="title"></div>
-
 <button onclick="toggleCalendar()">📅</button>
-
 <div>
 <button onclick="goToday()">Heute</button>
 <button onclick="changeWeek(1)">→</button>
@@ -80,7 +77,6 @@ button {font-size:16px;padding:6px 10px;}
 <div class="shadow" id="shadow"></div>
 </div>
 
-<!-- BACKUP BUTTONS -->
 <div style="position:fixed;bottom:10px;width:100%;text-align:center;">
 <button onclick="backup()">⚡ Backup</button>
 <button onclick="loadBackup()">Laden</button>
@@ -162,8 +158,14 @@ let div=document.createElement("div");
 div.className="day";
 
 let holidays=getHolidays(date.getFullYear());
-let vacations=getVacations(date.getFullYear());
 let dateStr=formatDate(date);
+
+// ⭐ FIX: mehrere Jahre berücksichtigen
+let vacations=[
+...getVacations(date.getFullYear()),
+...getVacations(date.getFullYear()-1),
+...getVacations(date.getFullYear()+1)
+];
 
 let isVacation=vacations.some(v=>date>=v.start && date<=v.end);
 
@@ -261,7 +263,13 @@ let grid=document.getElementById("calendarGrid");
 grid.innerHTML="";
 
 let holidays=getHolidays(calDate.getFullYear());
-let vacations=getVacations(calDate.getFullYear());
+
+// ⭐ FIX auch hier
+let vacations=[
+...getVacations(calDate.getFullYear()),
+...getVacations(calDate.getFullYear()-1),
+...getVacations(calDate.getFullYear()+1)
+];
 
 let year=calDate.getFullYear();
 let month=calDate.getMonth();
