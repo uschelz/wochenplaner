@@ -8,6 +8,7 @@
 
 <style>
 body {margin:0;font-family:-apple-system;background:#eaeaea;overflow:hidden;}
+
 .header {display:flex;justify-content:space-between;padding:10px;background:white;align-items:center;}
 
 .book {display:flex;height:calc(100vh - 120px);transition: transform 0.3s ease;}
@@ -135,7 +136,7 @@ add(corpusChristi,"Fronleichnam");
 return h;
 }
 
-// ===== FERIEN BAYERN KOMPLETT =====
+// ===== FERIEN KOMPLETT =====
 function getBavarianHolidays(){
 return [
 ["2026-02-16","2026-02-20"],
@@ -164,6 +165,21 @@ end:new Date(r[1]+"T23:59:59")
 }));
 }
 
+// ===== ROBUSTE FERIENPRÜFUNG =====
+function isVacation(date){
+
+let d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+return getBavarianHolidays().some(v => {
+
+let start = new Date(v.start.getFullYear(), v.start.getMonth(), v.start.getDate());
+let end = new Date(v.end.getFullYear(), v.end.getMonth(), v.end.getDate());
+
+return d >= start && d <= end;
+
+});
+}
+
 // ===== PLANER =====
 function getMonday(d){
 d=new Date(d);
@@ -173,13 +189,6 @@ return new Date(d.setDate(diff));
 }
 
 function formatDate(d){return d.toLocaleDateString("de-DE");}
-
-function isVacation(date){
-let d = normalize(date);
-return getBavarianHolidays().some(v =>
-d >= normalize(v.start) && d <= normalize(v.end)
-);
-}
 
 function createDay(name,date){
 
