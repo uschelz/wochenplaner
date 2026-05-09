@@ -32,7 +32,6 @@ button {font-size:16px;padding:6px 10px;}
 
 <body>
 
-<!-- MINI-KALENDER -->
 <div id="calendarOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;z-index:1000;">
 <div style="background:white;margin:50px auto;padding:10px;width:90%;max-width:350px;border-radius:10px;">
 <div style="display:flex;justify-content:space-between;">
@@ -40,14 +39,11 @@ button {font-size:16px;padding:6px 10px;}
 <div id="monthTitle"></div>
 <button onclick="changeMonth(1)">→</button>
 </div>
-
 <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;"></div>
-
 <button onclick="toggleCalendar()" style="margin-top:10px;width:100%;">Schließen</button>
 </div>
 </div>
 
-<!-- HEADER -->
 <div class="header">
 <button onclick="changeWeek(-1)">←</button>
 <div id="title"></div>
@@ -58,7 +54,6 @@ button {font-size:16px;padding:6px 10px;}
 </div>
 </div>
 
-<!-- PLANER -->
 <div class="book">
 <div class="pageWrapper" id="pageWrapper">
 <div class="page" id="left"></div>
@@ -71,8 +66,6 @@ button {font-size:16px;padding:6px 10px;}
 
 let weekOffset=0;
 let calDate=new Date();
-
-/* ===== HELPERS ===== */
 
 function normalize(d){
 return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -89,8 +82,7 @@ let diff=d.getDate()-day+(day===0?-6:1);
 return new Date(d.setDate(diff));
 }
 
-/* ===== FEIERTAGE ===== */
-
+// ===== FEIERTAGE =====
 function getEaster(year){
 let f=Math.floor,G=year%19,C=f(year/100);
 let H=(C-f(C/4)-f((8*C+13)/25)+19*G+15)%30;
@@ -133,8 +125,7 @@ add(cc,"Fronleichnam");
 return h;
 }
 
-/* ===== FERIEN ===== */
-
+// ===== FERIEN =====
 function getVacations(year){
 
 const ferien={
@@ -153,8 +144,7 @@ end:normalize(new Date(r[1]))
 }));
 }
 
-/* ===== PLANER ===== */
-
+// ===== PLANER =====
 function createDay(name,date){
 
 date=normalize(date);
@@ -176,13 +166,17 @@ div.classList.add("today");
 let header=document.createElement("div");
 header.innerText=name+" ("+dateStr+")";
 
-if(isVacation){
-header.innerText+=" – Ferien";
+/* ⭐ NEU: Kombination Ferien + Feiertag */
+if(isVacation && holidays[dateStr]){
+header.innerText += " – Ferien – " + holidays[dateStr];
+div.style.background = "linear-gradient(135deg, #e6ffe6 50%, #ffe0e0 50%)";
+}
+else if(isVacation){
+header.innerText += " – Ferien";
 div.classList.add("vacation");
 }
-
-if(holidays[dateStr]){
-header.innerText+=" – "+holidays[dateStr];
+else if(holidays[dateStr]){
+header.innerText += " – " + holidays[dateStr];
 div.classList.add("holiday");
 }
 
@@ -224,8 +218,7 @@ right.appendChild(createDay(d,date));
 });
 }
 
-/* ===== MINI-KALENDER ===== */
-
+// ===== MINI-KALENDER =====
 function toggleCalendar(){
 let el=document.getElementById("calendarOverlay");
 el.style.display = (el.style.display==="block") ? "none" : "block";
@@ -275,16 +268,14 @@ let isVacation=vacations.some(v=>date>=v.start && date<=v.end);
 let isHoliday=holidays[key];
 let hasEntry=localStorage.getItem("plan_"+key);
 
-// ⭐⭐⭐ 3-FARBEN LOGIK ⭐⭐⭐
 if(isVacation && isHoliday && hasEntry){
-cell.style.background=
-"linear-gradient(135deg, #b6f2b6 33%, #ffcccc 33%, #ffcccc 66%, #a0d8ff 66%)";
+cell.style.background="linear-gradient(135deg,#b6f2b6 33%,#ffcccc 33%,#ffcccc 66%,#a0d8ff 66%)";
 }
 else if(isVacation && hasEntry){
-cell.style.background="linear-gradient(135deg, #b6f2b6 50%, #a0d8ff 50%)";
+cell.style.background="linear-gradient(135deg,#b6f2b6 50%,#a0d8ff 50%)";
 }
 else if(isHoliday && hasEntry){
-cell.style.background="linear-gradient(135deg, #ffcccc 50%, #a0d8ff 50%)";
+cell.style.background="linear-gradient(135deg,#ffcccc 50%,#a0d8ff 50%)";
 }
 else if(isVacation){
 cell.style.background="#b6f2b6";
@@ -308,8 +299,7 @@ grid.appendChild(cell);
 }
 }
 
-/* ===== NAVIGATION ===== */
-
+// ===== NAVIGATION =====
 function changeWeek(n){
 weekOffset+=n;
 render();
