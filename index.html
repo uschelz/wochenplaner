@@ -22,14 +22,49 @@ background-size:100% 24px;
 .today {outline:2px solid red;}
 .holiday {background:#ffe0e0;}
 .vacation {background:#e6ffe6;}
+
+button {font-size:16px;padding:6px 10px;}
+
+/* Mini-Kalender */
+#calendarOverlay {
+position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.5);display:none;
+}
+
+#calendarBox {
+background:white;margin:50px auto;padding:10px;
+width:90%;max-width:350px;border-radius:10px;
+}
+
+#calendarGrid {
+display:grid;grid-template-columns:repeat(7,1fr);
+gap:4px;margin-top:10px;
+}
 </style>
 </head>
 
 <body>
 
+<!-- MINI-KALENDER -->
+<div id="calendarOverlay">
+<div id="calendarBox">
+
+<div style="display:flex;justify-content:space-between;">
+<button onclick="changeMonth(-1)">←</button>
+<div id="monthTitle"></div>
+<button onclick="changeMonth(1)">→</button>
+</div>
+
+<div id="calendarGrid"></div>
+
+<button onclick="toggleCalendar()" style="margin-top:10px;width:100%;">Schließen</button>
+</div>
+</div>
+
 <div class="header">
 <button onclick="changeWeek(-1)">←</button>
 <div id="title"></div>
+<button onclick="toggleCalendar()">📅</button>
 <button onclick="changeWeek(1)">→</button>
 </div>
 
@@ -40,48 +75,70 @@ background-size:100% 24px;
 
 <script>
 let weekOffset=0;
+let calDate=new Date();
 
+// ===== MINI-KALENDER =====
+function toggleCalendar(){
+let el=document.getElementById("calendarOverlay");
+
+if(el.style.display==="block"){
+el.style.display="none";
+}else{
+el.style.display="block";
+
+/* 👉 WICHTIG: IMMER AKTUELLER MONAT */
+calDate = new Date();
+
+renderCalendar();
+}
+}
+
+function changeMonth(n){
+calDate.setMonth(calDate.getMonth()+n);
+renderCalendar();
+}
+
+function renderCalendar(){
+let grid=document.getElementById("calendarGrid");
+grid.innerHTML="";
+
+let year=calDate.getFullYear();
+let month=calDate.getMonth();
+
+document.getElementById("monthTitle").innerText=
+calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
+
+let first=new Date(year,month,1);
+let start=(first.getDay()+6)%7;
+let days=new Date(year,month+1,0).getDate();
+
+for(let i=0;i<start;i++) grid.appendChild(document.createElement("div"));
+
+for(let d=1;d<=days;d++){
+let date=new Date(year,month,d);
+
+let cell=document.createElement("div");
+cell.innerText=d;
+cell.style.textAlign="center";
+cell.style.padding="6px";
+
+cell.onclick=()=>{
+let mondayClicked=getMonday(date);
+let mondayToday=getMonday(new Date());
+weekOffset=Math.round((mondayClicked-mondayToday)/(1000*60*60*24*7));
+render();
+toggleCalendar();
+};
+
+grid.appendChild(cell);
+}
+}
+
+// ===== REST DEINER STABILEN VERSION =====
 function normalize(d){
 return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-// ===== FEIERTAGE =====
-function getEaster(year){
-let f=Math.floor,G=year%19,C=f(year/100);
-let H=(C-f(C/4)-f((8*C+13)/25)+19*G+15)%30;
-let I=H-f(H/28)*(1-f(29/(H+1))*f((21-G)/11));
-let J=(year+f(year/4)+I+2-C+f(C/4))%7;
-let L=I-J;
-let m=3+f((L+40)/44);
-let d=L+28-31*f(m/4);
-return new Date(year,m-1,d);
-}
-
-function getHolidays(year){
-let easter=getEaster(year);
-let h={};
-const add=(d,n)=>h[d.toLocaleDateString("de-DE")]=n;
-
-add(new Date(year,0,1),"Neujahr");
-add(new Date(year,4,1),"Tag der Arbeit");
-
-let gf=new Date(easter); gf.setDate(easter.getDate()-2);
-let em=new Date(easter); em.setDate(easter.getDate()+1);
-
-add(gf,"Karfreitag");
-add(em,"Ostermontag");
-
-return h;
-}
-
-// ===== FERIEN =====
-function getVacations(year){
-return [
-{start:new Date("2026-08-03"), end:new Date("2026-09-14")}
-];
-}
-
-// ===== HELPER =====
 function getMonday(d){
 d=new Date(d);
 let day=d.getDay();
@@ -93,29 +150,14 @@ function formatDate(d){
 return d.toLocaleDateString("de-DE");
 }
 
-// ===== TAG =====
 function createDay(name,date){
-
 date=normalize(date);
 
 let div=document.createElement("div");
 div.className="day";
 
-let holidays=getHolidays(date.getFullYear());
-let vacations=getVacations(date.getFullYear());
-
 let header=document.createElement("div");
 header.innerText=name+" ("+formatDate(date)+")";
-
-if(vacations.some(v=>date>=v.start && date<=v.end)){
-div.classList.add("vacation");
-header.innerText+=" – Ferien";
-}
-
-if(holidays[formatDate(date)]){
-div.classList.add("holiday");
-header.innerText+=" – "+holidays[formatDate(date)];
-}
 
 if(formatDate(new Date())===formatDate(date)){
 div.classList.add("today");
@@ -131,7 +173,6 @@ div.appendChild(ta);
 return div;
 }
 
-// ===== RENDER =====
 function render(){
 let base=new Date();
 base.setDate(base.getDate()+weekOffset*7);
