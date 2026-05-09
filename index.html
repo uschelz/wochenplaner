@@ -276,6 +276,7 @@ function renderCalendar(){
 let grid=document.getElementById("calendarGrid");
 grid.innerHTML="";
 let holidays=getHolidays(calDate.getFullYear());
+let vacations = getVacations(calDate.getFullYear());
 
 let year=calDate.getFullYear();
 let month=calDate.getMonth();
@@ -298,8 +299,10 @@ cell.style.padding="6px";
 
 let key=formatDate(date);
 
-if(holidays[key]) cell.style.background="#ffcccc";
+let isVacation = vacations.some(v => date >= v.start && date <= v.end);
 
+if(isVacation) cell.style.background="#b6f2b6";
+if(holidays[key]) cell.style.background="#ffcccc";
 if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
 
 cell.onclick=()=>{
