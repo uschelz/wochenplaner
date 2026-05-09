@@ -212,12 +212,18 @@ div.classList.add("today");
 let header=document.createElement("div");
 header.innerText=name+" ("+dateStr+")";
 
-if(isVacation){
+if(isVacation && holidays[dateStr]){
+header.innerText+=" – Ferien – "+holidays[dateStr];
+
+// DIAGONALE MISCHFARBE
+div.style.background =
+"linear-gradient(135deg,#e6ffe6 50%,#ffe0e0 50%)";
+}
+else if(isVacation){
 header.innerText+=" – Ferien";
 div.classList.add("vacation");
 }
-
-if(holidays[dateStr]){
+else if(holidays[dateStr]){
 header.innerText+=" – "+holidays[dateStr];
 div.classList.add("holiday");
 }
