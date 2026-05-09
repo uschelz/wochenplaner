@@ -28,7 +28,6 @@ background-size:100% 24px;
 
 <body>
 
-<!-- MINI KALENDER -->
 <div id="calendarOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;
 background:rgba(0,0,0,0.5);display:none;z-index:9999;">
 <div style="background:white;margin:60px auto;padding:10px;width:90%;max-width:350px;border-radius:10px;">
@@ -42,7 +41,6 @@ background:rgba(0,0,0,0.5);display:none;z-index:9999;">
 </div>
 </div>
 
-<!-- HEADER -->
 <div class="header">
 <button onclick="changeWeek(-1)">←</button>
 <div id="title"></div>
@@ -69,8 +67,17 @@ let weekOffset=0;
 let calDate=new Date();
 let startX=0,currentX=0,isDragging=false;
 
+// ===== DATUM NORMALISIEREN =====
+function norm(d){
+let x=new Date(d);
+x.setHours(0,0,0,0);
+return x;
+}
+
 // ===== KEY =====
-function getKey(d){return d.toISOString().split("T")[0];}
+function getKey(d){
+return norm(d).toISOString().split("T")[0];
+}
 
 // ===== FEIERTAGE =====
 function getEaster(y){
@@ -120,10 +127,11 @@ const vacations=[
 ["2026-08-03","2026-09-14"],
 ["2026-11-02","2026-11-06"],
 ["2026-12-24","2027-01-09"]
-].map(v=>({start:new Date(v[0]),end:new Date(v[1])}));
+].map(v=>({start:norm(v[0]),end:norm(v[1])}));
 
 function isVacation(date){
-return vacations.some(v=>date>=v.start&&date<=v.end);
+let d=norm(date);
+return vacations.some(v=>d>=v.start && d<=v.end);
 }
 
 // ===== PLANER =====
@@ -190,7 +198,7 @@ right.appendChild(createDay(d,date));
 });
 }
 
-// ===== MINI KALENDER =====
+// ===== MINI-KALENDER =====
 function toggleCalendar(){
 let el=document.getElementById("calendarOverlay");
 el.style.display=(el.style.display==="block")?"none":"block";
@@ -221,7 +229,7 @@ let key=getKey(date);
 let cell=document.createElement("div");
 cell.innerText=d;
 
-// Reihenfolge
+// 🎯 Reihenfolge korrekt
 if(isVacation(date)) cell.style.background="#b6f2b6";
 if(holidays[key]) cell.style.background="#ffcccc";
 if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
