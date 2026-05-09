@@ -224,8 +224,9 @@ renderCalendar();
 }
 
 function changeMonth(n){
-calDate.setMonth(calDate.getMonth()+n);
+calDate = new Date(calDate.getFullYear(), calDate.getMonth()+n, 1);
 renderCalendar();
+}
 }
 
 function renderCalendar(){
@@ -242,7 +243,7 @@ document.getElementById("monthTitle").innerText=
 calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
 
 let first=new Date(year,month,1);
-let start=(first.getDay()+6)%7;
+let start=(first.getDay()===0 ? 6 : first.getDay()-1);
 let days=new Date(year,month+1,0).getDate();
 
 for(let i=0;i<start;i++){
