@@ -32,6 +32,7 @@ background-size:100% 24px;
 
 .today {outline:2px solid red;}
 .holiday {background:#ffe0e0;}
+.vacation {background:#e6ffe6;border-radius:6px;padding:2px;}
 
 button {font-size:16px;padding:6px 10px;}
 </style>
@@ -158,9 +159,16 @@ div.className="day";
 
 let dateStr=formatDate(date);
 let holidays=getHolidays(date.getFullYear());
+let vacations=getBavarianHolidays(date.getFullYear());
+let isVacation = vacations.some(v => date >= v.start && date <= v.end);
 
 let header=document.createElement("div");
 header.innerText=name+" ("+dateStr+")";
+
+if(isVacation){
+header.innerText+=" – Ferien";
+div.classList.add("vacation");
+}
 
 if(holidays[dateStr]){
 header.innerText+=" – "+holidays[dateStr];
@@ -273,17 +281,13 @@ cell.style.padding="6px";
 
 let key=formatDate(date);
 
-// Ferien
 let isVacation = vacations.some(v => date >= v.start && date <= v.end);
 if(isVacation) cell.style.background="#b6f2b6";
 
-// Feiertage
 if(holidays[key]) cell.style.background="#ffcccc";
 
-// Einträge
 if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
 
-// Heute
 if(key===todayStr){
 cell.style.border="2px solid red";
 cell.style.borderRadius="50%";
