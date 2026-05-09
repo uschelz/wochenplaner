@@ -63,7 +63,6 @@ gap:4px;margin-top:10px;
 </div>
 </div>
 
-<!-- HEADER -->
 <div class="header">
 <button onclick="changeWeek(-1)">←</button>
 <div id="title"></div>
@@ -74,13 +73,11 @@ gap:4px;margin-top:10px;
 </div>
 </div>
 
-<!-- PLANER -->
-<div class="book" id="book">
+<div class="book">
 <div class="page" id="left"></div>
 <div class="page" id="right"></div>
 </div>
 
-<!-- BACKUP -->
 <div style="position:fixed;bottom:10px;width:100%;text-align:center;">
 <button onclick="backup()">💾 Backup</button>
 <button onclick="loadBackup()">Laden</button>
@@ -90,13 +87,10 @@ gap:4px;margin-top:10px;
 let weekOffset=0;
 let calDate=new Date();
 
-// ===== HELPER =====
-function normalize(d){
-return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-
-function getKey(d){
-return d.toISOString().split("T")[0];
+// ===== ISO DATE =====
+function getISO(d){
+return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+.toISOString().split("T")[0];
 }
 
 // ===== FEIERTAGE =====
@@ -114,7 +108,7 @@ return new Date(year,m-1,d);
 function getHolidays(year){
 let easter=getEaster(year);
 let h={};
-const add=(d,n)=>h[getKey(normalize(d))]=n;
+const add=(d,n)=>h[getISO(d)]=n;
 
 add(new Date(year,0,1),"Neujahr");
 add(new Date(year,0,6),"Heilige Drei Könige");
@@ -140,23 +134,25 @@ return h;
 }
 
 // ===== FERIEN =====
-function getVacations(){
-return [
-{start:new Date("2026-08-03"), end:new Date("2026-09-14")},
-{start:new Date("2027-08-02"), end:new Date("2027-09-13")},
-{start:new Date("2028-07-31"), end:new Date("2028-09-11")}
+const vacations=[
+["2026-08-03","2026-09-14"],
+["2027-08-02","2027-09-13"],
+["2028-07-31","2028-09-11"]
 ];
+
+function isVacation(date){
+let iso=getISO(date);
+return vacations.some(v=>iso>=v[0] && iso<=v[1]);
 }
 
 // ===== MINI-KALENDER =====
 function toggleCalendar(){
 let el=document.getElementById("calendarOverlay");
-
 if(el.style.display==="block"){
 el.style.display="none";
 }else{
 el.style.display="block";
-calDate = new Date();
+calDate=new Date();
 renderCalendar();
 }
 }
@@ -180,14 +176,14 @@ for(let i=0;i<start;i++) grid.appendChild(document.createElement("div"));
 
 for(let d=1;d<=days;d++){
 let date=new Date(calDate.getFullYear(),calDate.getMonth(),d);
-let key=getKey(normalize(date));
+let iso=getISO(date);
 
 let cell=document.createElement("div");
 cell.innerText=d;
 
-if(holidays[key]) cell.style.background="#ffcccc";
-if(getVacations().some(v=>date>=v.start && date<=v.end)) cell.style.background="#b6f2b6";
-if(localStorage.getItem("plan_"+date.toLocaleDateString("de-DE"))) cell.style.background="#a0d8ff";
+if(isVacation(date)) cell.style.background="#b6f2b6";
+if(holidays[iso]) cell.style.background="#ffcccc";
+if(localStorage.getItem("plan_"+iso)) cell.style.background="#a0d8ff";
 
 cell.onclick=()=>{
 let mondayClicked=getMonday(date);
@@ -214,34 +210,33 @@ return d.toLocaleDateString("de-DE");
 }
 
 function createDay(name,date){
-
 let div=document.createElement("div");
 div.className="day";
 
 let holidays=getHolidays(date.getFullYear());
-let key=getKey(normalize(date));
+let iso=getISO(date);
 
 let header=document.createElement("div");
 header.innerText=name+" ("+formatDate(date)+")";
 
-if(getVacations().some(v=>date>=v.start && date<=v.end)){
+if(isVacation(date)){
 div.classList.add("vacation");
 header.innerText+=" – Ferien";
 }
 
-if(holidays[key]){
+if(holidays[iso]){
 div.classList.add("holiday");
-header.innerText+=" – "+holidays[key];
+header.innerText+=" – "+holidays[iso];
 }
 
-if(formatDate(new Date())===formatDate(date)){
+if(getISO(new Date())===iso){
 div.classList.add("today");
 }
 
 let ta=document.createElement("textarea");
-let storageKey="plan_"+formatDate(date);
-ta.value=localStorage.getItem(storageKey)||"";
-ta.oninput=()=>localStorage.setItem(storageKey,ta.value);
+let key="plan_"+iso;
+ta.value=localStorage.getItem(key)||"";
+ta.oninput=()=>localStorage.setItem(key,ta.value);
 
 div.appendChild(header);
 div.appendChild(ta);
@@ -306,7 +301,6 @@ reader.readAsText(e.target.files[0]);
 input.click();
 }
 
-// START
 render();
 </script>
 
