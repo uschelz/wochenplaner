@@ -55,7 +55,8 @@ width:90%;max-width:350px;border-radius:10px;">
 </div>
 
 <div id="calendarGrid" style="
-display:grid;grid-template-columns:repeat(7,1fr);
+display:grid;
+grid-template-columns:repeat(7,1fr);
 gap:4px;margin-top:10px;"></div>
 
 <button onclick="toggleCalendar()" style="margin-top:10px;width:100%;">Schließen</button>
@@ -216,10 +217,8 @@ function goToday(){weekOffset=0;render();}
 // ===== KALENDER =====
 function toggleCalendar(){
 let el=document.getElementById("calendarOverlay");
+el.style.display = (el.style.display==="block") ? "none" : "block";
 if(el.style.display==="block"){
-el.style.display="none";
-}else{
-el.style.display="block";
 renderCalendar();
 }
 }
@@ -246,7 +245,9 @@ let first=new Date(year,month,1);
 let start=(first.getDay()+6)%7;
 let days=new Date(year,month+1,0).getDate();
 
-for(let i=0;i<start;i++) grid.appendChild(document.createElement("div"));
+for(let i=0;i<start;i++){
+grid.appendChild(document.createElement("div"));
+}
 
 for(let d=1;d<=days;d++){
 let date=new Date(year,month,d);
