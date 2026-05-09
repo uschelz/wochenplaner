@@ -12,6 +12,8 @@ body {margin:0;font-family:-apple-system;background:#eaeaea;overflow:hidden;}
 .header {display:flex;justify-content:space-between;padding:10px;background:white;align-items:center;}
 
 .book {
+  transition: transform 0.3s ease;
+will-change: transform;
 display:flex;
 height:calc(100vh - 80px);
 perspective:1200px;
@@ -308,7 +310,51 @@ wrapper.style.transform="rotateY(0deg)";
 shadow.style.opacity=0;
 isDragging=false;
 });
+// ===== SMOOTH BLÄTTERN =====
+let startX = 0;
+let currentX = 0;
+let isDragging = false;
 
+const book = document.querySelector(".book");
+
+document.addEventListener("touchstart", e => {
+startX = e.touches[0].clientX;
+isDragging = true;
+});
+
+document.addEventListener("touchmove", e => {
+if (!isDragging) return;
+currentX = e.touches[0].clientX;
+let diff = currentX - startX;
+
+book.style.transform = "translateX(" + diff + "px)";
+});
+
+document.addEventListener("touchend", () => {
+if (!isDragging) return;
+
+let diff = currentX - startX;
+
+if (diff < -80) {
+book.style.transform = "translateX(-100%)";
+setTimeout(() => {
+changeWeek(1);
+book.style.transform = "translateX(0)";
+}, 200);
+}
+else if (diff > 80) {
+book.style.transform = "translateX(100%)";
+setTimeout(() => {
+changeWeek(-1);
+book.style.transform = "translateX(0)";
+}, 200);
+}
+else {
+book.style.transform = "translateX(0)";
+}
+
+isDragging = false;
+});
 render();
 </script>
 
