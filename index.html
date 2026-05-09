@@ -6,13 +6,14 @@
 <title>Wochenplaner</title>
 
 <style>
-body {margin:0;font-family:-apple-system;background:#eaeaea;}
-.header {display:flex;justify-content:space-between;padding:10px;background:white;}
+body {margin:0;font-family:-apple-system;background:#eaeaea;overflow:hidden;}
+.header {display:flex;justify-content:space-between;padding:10px;background:white;align-items:center;}
 
-.book {display:flex;height:calc(100vh - 60px);}
+.book {display:flex;height:calc(100vh - 80px);}
 .page {flex:1;padding:8px;background:white;display:flex;flex-direction:column;gap:8px;}
 
 .day {flex:1;display:flex;flex-direction:column;}
+
 textarea {
 flex:1;border:none;
 background-image:linear-gradient(to bottom,transparent 95%,#ddd 95%);
@@ -20,15 +21,14 @@ background-size:100% 24px;
 }
 
 .today {outline:2px solid red;}
-.holiday {background:#ffe0e0;}
-.vacation {background:#e6ffe6;}
 
 button {font-size:16px;padding:6px 10px;}
 
 /* Mini-Kalender */
 #calendarOverlay {
 position:fixed;top:0;left:0;width:100%;height:100%;
-background:rgba(0,0,0,0.5);display:none;
+background:rgba(0,0,0,0.5);
+display:none;
 }
 
 #calendarBox {
@@ -61,16 +61,27 @@ gap:4px;margin-top:10px;
 </div>
 </div>
 
+<!-- HEADER -->
 <div class="header">
 <button onclick="changeWeek(-1)">←</button>
 <div id="title"></div>
 <button onclick="toggleCalendar()">📅</button>
+<div>
+<button onclick="goToday()">Heute</button>
 <button onclick="changeWeek(1)">→</button>
 </div>
+</div>
 
-<div class="book">
+<!-- PLANER -->
+<div class="book" id="book">
 <div class="page" id="left"></div>
 <div class="page" id="right"></div>
+</div>
+
+<!-- BACKUP -->
+<div style="position:fixed;bottom:10px;width:100%;text-align:center;">
+<button onclick="backup()">💾 Backup</button>
+<button onclick="loadBackup()">Laden</button>
 </div>
 
 <script>
@@ -86,7 +97,7 @@ el.style.display="none";
 }else{
 el.style.display="block";
 
-/* 👉 WICHTIG: IMMER AKTUELLER MONAT */
+// 👉 IMMER AKTUELLER MONAT
 calDate = new Date();
 
 renderCalendar();
@@ -112,7 +123,9 @@ let first=new Date(year,month,1);
 let start=(first.getDay()+6)%7;
 let days=new Date(year,month+1,0).getDate();
 
-for(let i=0;i<start;i++) grid.appendChild(document.createElement("div"));
+for(let i=0;i<start;i++){
+grid.appendChild(document.createElement("div"));
+}
 
 for(let d=1;d<=days;d++){
 let date=new Date(year,month,d);
@@ -134,11 +147,7 @@ grid.appendChild(cell);
 }
 }
 
-// ===== REST DEINER STABILEN VERSION =====
-function normalize(d){
-return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-
+// ===== PLANER =====
 function getMonday(d){
 d=new Date(d);
 let day=d.getDay();
@@ -151,7 +160,6 @@ return d.toLocaleDateString("de-DE");
 }
 
 function createDay(name,date){
-date=normalize(date);
 
 let div=document.createElement("div");
 div.className="day";
@@ -178,6 +186,11 @@ let base=new Date();
 base.setDate(base.getDate()+weekOffset*7);
 
 let monday=getMonday(base);
+let sunday=new Date(monday);
+sunday.setDate(monday.getDate()+6);
+
+document.getElementById("title").innerText=
+formatDate(monday)+" – "+formatDate(sunday);
 
 let left=document.getElementById("left");
 let right=document.getElementById("right");
@@ -203,6 +216,39 @@ weekOffset+=n;
 render();
 }
 
+function goToday(){
+weekOffset=0;
+render();
+}
+
+// ===== BACKUP =====
+function backup(){
+let data=JSON.stringify(localStorage);
+let blob=new Blob([data],{type:"text/plain"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="backup.txt";
+a.click();
+}
+
+function loadBackup(){
+let input=document.createElement("input");
+input.type="file";
+input.onchange=e=>{
+let reader=new FileReader();
+reader.onload=e=>{
+let data=JSON.parse(e.target.result);
+for(let key in data){
+localStorage.setItem(key,data[key]);
+}
+render();
+};
+reader.readAsText(e.target.files[0]);
+};
+input.click();
+}
+
+// START
 render();
 </script>
 
