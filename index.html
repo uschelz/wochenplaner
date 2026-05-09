@@ -4,28 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wochenplaner</title>
-<link rel="apple-touch-icon" href="./icon.png">
 
 <style>
-body {margin:0;font-family:-apple-system;background:#eaeaea;overflow:hidden;}
-.header {display:flex;justify-content:space-between;padding:10px;background:white;align-items:center;}
+body {margin:0;font-family:-apple-system;background:#eaeaea;}
+.header {display:flex;justify-content:space-between;padding:10px;background:white;}
 
-.book {
-display:flex;
-height:calc(100vh - 80px);
-transition: transform 0.3s ease;
-}
-
-.page {padding:8px;background:white;display:flex;flex-direction:column;gap:8px;}
-.page#left {flex:1.2;}
-.page#right {flex:0.8;}
-
-.spine {width:4px;background:#ccc;}
+.book {display:flex;height:calc(100vh - 60px);}
+.page {flex:1;padding:8px;background:white;display:flex;flex-direction:column;gap:8px;}
 
 .day {flex:1;display:flex;flex-direction:column;}
-
 textarea {
-flex:1;border:none;font-size:14px;
+flex:1;border:none;
 background-image:linear-gradient(to bottom,transparent 95%,#ddd 95%);
 background-size:100% 24px;
 }
@@ -33,56 +22,25 @@ background-size:100% 24px;
 .today {outline:2px solid red;}
 .holiday {background:#ffe0e0;}
 .vacation {background:#e6ffe6;}
-
-button {font-size:16px;padding:6px 10px;}
 </style>
 </head>
 
 <body>
 
-<div id="calendarOverlay" style="
-position:fixed;top:0;left:0;width:100%;height:100%;
-background:rgba(0,0,0,0.5);
-display:none;z-index:1000;">
-<div style="
-background:white;margin:50px auto;padding:10px;
-width:90%;max-width:350px;border-radius:10px;">
-
-<div style="display:flex;justify-content:space-between;">
-<button onclick="changeMonth(-1)">←</button>
-<div id="monthTitle"></div>
-<button onclick="changeMonth(1)">→</button>
-</div>
-
-<div id="calendarGrid" style="
-display:grid;grid-template-columns:repeat(7,1fr);
-gap:4px;margin-top:10px;"></div>
-
-<button onclick="toggleCalendar()" style="margin-top:10px;width:100%;">Schließen</button>
-</div>
-</div>
-
 <div class="header">
 <button onclick="changeWeek(-1)">←</button>
 <div id="title"></div>
-<button onclick="toggleCalendar()">📅</button>
-<div>
-<button onclick="goToday()">Heute</button>
 <button onclick="changeWeek(1)">→</button>
 </div>
-</div>
 
-<div class="book" id="book">
+<div class="book">
 <div class="page" id="left"></div>
-<div class="spine"></div>
 <div class="page" id="right"></div>
 </div>
 
 <script>
-let weekOffset = 0;
-let calDate = new Date();
+let weekOffset=0;
 
-// ===== DATUM NORMALISIEREN =====
 function normalize(d){
 return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
@@ -94,9 +52,9 @@ let H=(C-f(C/4)-f((8*C+13)/25)+19*G+15)%30;
 let I=H-f(H/28)*(1-f(29/(H+1))*f((21-G)/11));
 let J=(year+f(year/4)+I+2-C+f(C/4))%7;
 let L=I-J;
-let month=3+f((L+40)/44);
-let day=L+28-31*f(month/4);
-return new Date(year,month-1,day);
+let m=3+f((L+40)/44);
+let d=L+28-31*f(m/4);
+return new Date(year,m-1,d);
 }
 
 function getHolidays(year){
@@ -105,45 +63,25 @@ let h={};
 const add=(d,n)=>h[d.toLocaleDateString("de-DE")]=n;
 
 add(new Date(year,0,1),"Neujahr");
-add(new Date(year,0,6),"Heilige Drei Könige");
 add(new Date(year,4,1),"Tag der Arbeit");
-add(new Date(year,9,3),"Tag der Deutschen Einheit");
-add(new Date(year,10,1),"Allerheiligen");
-add(new Date(year,11,25),"1. Weihnachtstag");
-add(new Date(year,11,26),"2. Weihnachtstag");
 
-let goodFriday=new Date(easter); goodFriday.setDate(easter.getDate()-2);
-let easterMon=new Date(easter); easterMon.setDate(easter.getDate()+1);
-let ascension=new Date(easter); ascension.setDate(easter.getDate()+39);
-let pentecostMon=new Date(easter); pentecostMon.setDate(easter.getDate()+50);
-let corpusChristi=new Date(easter); corpusChristi.setDate(easter.getDate()+60);
+let gf=new Date(easter); gf.setDate(easter.getDate()-2);
+let em=new Date(easter); em.setDate(easter.getDate()+1);
 
-add(goodFriday,"Karfreitag");
-add(easterMon,"Ostermontag");
-add(ascension,"Christi Himmelfahrt");
-add(pentecostMon,"Pfingstmontag");
-add(corpusChristi,"Fronleichnam");
+add(gf,"Karfreitag");
+add(em,"Ostermontag");
 
 return h;
 }
 
 // ===== FERIEN =====
-function getBavarianHolidays(year){
-const ferien = {
-2026: [["2026-08-03","2026-09-14"]],
-2027: [["2027-08-02","2027-09-13"]],
-2028: [["2028-07-31","2028-09-11"]],
-};
-
-if(!ferien[year]) return [];
-
-return ferien[year].map(r => ({
-start: normalize(new Date(r[0])),
-end: normalize(new Date(r[1]))
-}));
+function getVacations(year){
+return [
+{start:new Date("2026-08-03"), end:new Date("2026-09-14")}
+];
 }
 
-// ===== HELPERS =====
+// ===== HELPER =====
 function getMonday(d){
 d=new Date(d);
 let day=d.getDay();
@@ -151,32 +89,32 @@ let diff=d.getDate()-day+(day===0?-6:1);
 return new Date(d.setDate(diff));
 }
 
-function formatDate(d){return d.toLocaleDateString("de-DE");}
+function formatDate(d){
+return d.toLocaleDateString("de-DE");
+}
 
-// ===== PLANER =====
+// ===== TAG =====
 function createDay(name,date){
 
-date = normalize(date);
+date=normalize(date);
 
 let div=document.createElement("div");
 div.className="day";
 
 let holidays=getHolidays(date.getFullYear());
-let vacations=getBavarianHolidays(date.getFullYear());
-
-let isVacation = vacations.some(v => date >= v.start && date <= v.end);
+let vacations=getVacations(date.getFullYear());
 
 let header=document.createElement("div");
 header.innerText=name+" ("+formatDate(date)+")";
 
-if(isVacation){
-header.innerText+=" – Ferien";
+if(vacations.some(v=>date>=v.start && date<=v.end)){
 div.classList.add("vacation");
+header.innerText+=" – Ferien";
 }
 
 if(holidays[formatDate(date)]){
-header.innerText+=" – "+holidays[formatDate(date)];
 div.classList.add("holiday");
+header.innerText+=" – "+holidays[formatDate(date)];
 }
 
 if(formatDate(new Date())===formatDate(date)){
@@ -193,6 +131,7 @@ div.appendChild(ta);
 return div;
 }
 
+// ===== RENDER =====
 function render(){
 let base=new Date();
 base.setDate(base.getDate()+weekOffset*7);
@@ -211,33 +150,18 @@ date.setDate(monday.getDate()+i);
 left.appendChild(createDay(d,date));
 });
 
-["Donnerstag","Freitag"].forEach((d,i)=>{
+["Donnerstag","Freitag","Samstag","Sonntag"].forEach((d,i)=>{
 let date=new Date(monday);
 date.setDate(monday.getDate()+i+3);
 right.appendChild(createDay(d,date));
 });
-
-let weekend=document.createElement("div");
-weekend.style.display="flex";
-weekend.style.flexDirection="column";
-weekend.style.flex="1";
-
-let sat=new Date(monday);
-sat.setDate(monday.getDate()+5);
-
-let sun=new Date(monday);
-sun.setDate(monday.getDate()+6);
-
-weekend.appendChild(createDay("Samstag",sat));
-weekend.appendChild(createDay("Sonntag",sun));
-
-right.appendChild(weekend);
 }
 
-function changeWeek(n){weekOffset+=n;render();}
-function goToday(){weekOffset=0;render();}
+function changeWeek(n){
+weekOffset+=n;
+render();
+}
 
-// ===== START =====
 render();
 </script>
 
