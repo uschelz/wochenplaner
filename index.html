@@ -78,7 +78,7 @@ gap:4px;margin-top:10px;
 <div class="page" id="right"></div>
 </div>
 
-<!-- BACKUP -->
+<!-- ✅ BACKUP LEISTE -->
 <div style="position:fixed;bottom:10px;width:100%;text-align:center;">
 <button onclick="backup()">💾 Backup</button>
 <button onclick="loadBackup()">Laden</button>
@@ -221,13 +221,13 @@ weekOffset=0;
 render();
 }
 
-// ===== BACKUP =====
+// ===== BACKUP FUNKTIONEN =====
 function backup(){
 let data=JSON.stringify(localStorage);
 let blob=new Blob([data],{type:"text/plain"});
 let a=document.createElement("a");
 a.href=URL.createObjectURL(blob);
-a.download="backup.txt";
+a.download="wochenplan_backup.txt";
 a.click();
 }
 
