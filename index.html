@@ -8,7 +8,6 @@
 
 <style>
 body {margin:0;font-family:-apple-system;background:#eaeaea;overflow:hidden;}
-
 .header {display:flex;justify-content:space-between;padding:10px;background:white;align-items:center;}
 
 .book {
@@ -75,7 +74,7 @@ gap:4px;margin-top:10px;"></div>
 </div>
 
 <!-- PLANER -->
-<div class="book">
+<div class="book" id="book">
 <div class="page" id="left"></div>
 <div class="spine"></div>
 <div class="page" id="right"></div>
@@ -213,14 +212,14 @@ right.appendChild(weekend);
 function changeWeek(n){weekOffset+=n;render();}
 function goToday(){weekOffset=0;render();}
 
-// ===== KALENDER FIX =====
+// ===== KALENDER =====
 function toggleCalendar(){
 let el=document.getElementById("calendarOverlay");
 if(el.style.display==="block"){
 el.style.display="none";
 }else{
 el.style.display="block";
-renderCalendar(); // ← WICHTIG
+renderCalendar();
 }
 }
 
@@ -243,7 +242,7 @@ document.getElementById("monthTitle").innerText=
 calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
 
 let first=new Date(year,month,1);
-let start=(first.getDay()+6)%7; // ← FIX (Montag = Start)
+let start=(first.getDay()+6)%7;
 let days=new Date(year,month+1,0).getDate();
 
 for(let i=0;i<start;i++){
@@ -259,13 +258,9 @@ cell.style.padding="6px";
 
 let key=formatDate(date);
 
-// Prioritäten sauber
-if(holidays[key]){
-cell.style.background="#ffcccc";
-}
-if(localStorage.getItem("plan_"+key)){
-cell.style.background="#a0d8ff";
-}
+if(holidays[key]) cell.style.background="#ffcccc";
+if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
+
 if(key===todayStr){
 cell.style.border="2px solid red";
 cell.style.borderRadius="50%";
@@ -283,23 +278,23 @@ grid.appendChild(cell);
 }
 }
 
-// ===== SWIPE =====
+// ===== SWIPE NUR IM PLANER =====
 let startX=0,currentX=0,isDragging=false;
-const book=document.querySelector(".book");
+const book=document.getElementById("book");
 
-document.addEventListener("touchstart",e=>{
+book.addEventListener("touchstart",e=>{
 startX=e.touches[0].clientX;
 isDragging=true;
 });
 
-document.addEventListener("touchmove",e=>{
+book.addEventListener("touchmove",e=>{
 if(!isDragging)return;
 currentX=e.touches[0].clientX;
 let diff=currentX-startX;
 book.style.transform="translateX("+diff+"px)";
 });
 
-document.addEventListener("touchend",()=>{
+book.addEventListener("touchend",()=>{
 if(!isDragging)return;
 
 let diff=currentX-startX;
@@ -319,6 +314,7 @@ book.style.transform="translateX(0)";
 isDragging=false;
 });
 
+// START
 render();
 </script>
 
