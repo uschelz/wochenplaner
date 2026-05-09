@@ -53,7 +53,7 @@ button {font-size:16px;padding:6px 10px;}
 <div class="header">
 <button onclick="changeWeek(-1)">←</button>
 <div id="title"></div>
-<button onclick="toggleCalendar()">•/</button>
+<button onclick="toggleCalendar()">📅</button>
 <div>
 <button onclick="goToday()">Heute</button>
 <button onclick="changeWeek(1)">→</button>
@@ -362,13 +362,9 @@ cell.style.background="#a0d8ff";
 }
 
 cell.onclick=()=>{
-let selectedMonday = getMonday(date);
-let currentMonday = getMonday(new Date());
-
-weekOffset = Math.round(
-(selectedMonday - currentMonday) / (1000*60*60*24*7)
-);
-
+let today=new Date();
+let diff=Math.floor((date-today)/(1000*60*60*24));
+weekOffset=Math.floor(diff/7);
 render();
 toggleCalendar();
 };
