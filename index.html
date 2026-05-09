@@ -121,7 +121,7 @@ add(corpusChristi,"Fronleichnam");
 return holidays;
 }
 
-// ===== FERIEN (ERSATZT) =====
+// ===== FERIEN =====
 function getVacations(year){
 const ferien = {
 
@@ -178,7 +178,7 @@ end: normalize(new Date(r[1]))
 }));
 }
 
-// ===== REST UNVERÄNDERT =====
+// ===== PLANER =====
 function getMonday(d){
 d=new Date(d);
 let day=d.getDay();
@@ -374,9 +374,63 @@ reader.readAsText(e.target.files[0]);
 input.click();
 }
 
+// ===== WISCH-FUNKTION =====
+let startX=0;
+let currentX=0;
+let isDragging=false;
+
+const wrapper=document.getElementById("pageWrapper");
+const shadow=document.getElementById("shadow");
+
+document.addEventListener("touchstart",e=>{
+startX=e.touches[0].clientX;
+currentX=startX;
+isDragging=true;
+wrapper.style.transition="none";
+});
+
+document.addEventListener("touchmove",e=>{
+if(!isDragging) return;
+
+currentX=e.touches[0].clientX;
+let diff=currentX-startX;
+
+wrapper.style.transform="translateX("+diff+"px)";
+shadow.style.opacity=Math.min(Math.abs(diff)/150,0.4);
+});
+
+document.addEventListener("touchend",()=>{
+if(!isDragging) return;
+
+let diff=currentX-startX;
+wrapper.style.transition="transform 0.3s ease";
+
+if(diff < -80){
+wrapper.style.transform="translateX(-100%)";
+setTimeout(()=>{
+changeWeek(1);
+wrapper.style.transform="translateX(0)";
+},200);
+}
+else if(diff > 80){
+wrapper.style.transform="translateX(100%)";
+setTimeout(()=>{
+changeWeek(-1);
+wrapper.style.transform="translateX(0)";
+},200);
+}
+else{
+wrapper.style.transform="translateX(0)";
+}
+
+shadow.style.opacity=0;
+isDragging=false;
+});
+
 function changeWeek(n){weekOffset+=n;render();}
 function goToday(){weekOffset=0;render();}
 
+// START
 render();
 </script>
 
