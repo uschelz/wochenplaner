@@ -10,11 +10,10 @@
 body {margin:0;font-family:-apple-system;background:#eaeaea;overflow:hidden;}
 .header {display:flex;justify-content:space-between;padding:10px;background:white;align-items:center;}
 
-.book {display:flex;height:calc(100vh - 80px);position:relative;}
-
-.pageWrapper {
-display:flex;width:100%;height:100%;
-transition:transform 0.3s ease;
+.book {
+display:flex;
+height:calc(100vh - 80px);
+transition: transform 0.3s ease;
 }
 
 .page {padding:8px;background:white;display:flex;flex-direction:column;gap:8px;}
@@ -34,30 +33,37 @@ background-size:100% 24px;
 .today {outline:2px solid red;}
 .holiday {background:#ffe0e0;}
 
-.shadow {
-position:absolute;top:0;left:0;width:100%;height:100%;
-background:linear-gradient(to right,rgba(0,0,0,0.2),transparent);
-opacity:0;pointer-events:none;
-}
-
 button {font-size:16px;padding:6px 10px;}
 </style>
 </head>
 
 <body>
 
-<div id="calendarOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;z-index:1000;">
-<div style="background:white;margin:50px auto;padding:10px;width:90%;max-width:350px;border-radius:10px;">
+<!-- OVERLAY -->
+<div id="calendarOverlay" style="
+position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.5);
+display:none;z-index:1000;">
+<div style="
+background:white;margin:50px auto;padding:10px;
+width:90%;max-width:350px;border-radius:10px;">
+
 <div style="display:flex;justify-content:space-between;">
 <button onclick="changeMonth(-1)">←</button>
 <div id="monthTitle"></div>
 <button onclick="changeMonth(1)">→</button>
 </div>
-<div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;"></div>
+
+<div id="calendarGrid" style="
+display:grid;
+grid-template-columns:repeat(7,1fr);
+gap:4px;margin-top:10px;"></div>
+
 <button onclick="toggleCalendar()" style="margin-top:10px;width:100%;">Schließen</button>
 </div>
 </div>
 
+<!-- HEADER -->
 <div class="header">
 <button onclick="changeWeek(-1)">←</button>
 <div id="title"></div>
@@ -68,27 +74,21 @@ button {font-size:16px;padding:6px 10px;}
 </div>
 </div>
 
-<div class="book">
-<div class="pageWrapper" id="pageWrapper">
+<!-- PLANER -->
+<div class="book" id="book">
 <div class="page" id="left"></div>
 <div class="spine"></div>
 <div class="page" id="right"></div>
 </div>
-<div class="shadow" id="shadow"></div>
-</div>
-
-<div style="position:fixed;bottom:10px;width:100%;text-align:center;">
-<button onclick="backup()">⚡ Backup</button>
-<button onclick="loadBackup()">Laden</button>
-</div>
 
 <script>
-let weekOffset=0;
-let calDate=new Date();
+let weekOffset = 0;
+let calDate = new Date();
 
 // ===== FEIERTAGE =====
 function getEaster(year){
-let f=Math.floor, G=year%19, C=f(year/100), H=(C-f(C/4)-f((8*C+13)/25)+19*G+15)%30;
+let f=Math.floor,G=year%19,C=f(year/100);
+let H=(C-f(C/4)-f((8*C+13)/25)+19*G+15)%30;
 let I=H-f(H/28)*(1-f(29/(H+1))*f((21-G)/11));
 let J=(year+f(year/4)+I+2-C+f(C/4))%7;
 let L=I-J;
@@ -99,13 +99,9 @@ return new Date(year,month-1,day);
 
 function getHolidays(year){
 let easter=getEaster(year);
-let holidays={};
+let h={};
+const add=(d,n)=>h[d.toLocaleDateString("de-DE")]=n;
 
-function add(date,name){
-holidays[date.toLocaleDateString("de-DE")] = name;
-}
-
-// feste
 add(new Date(year,0,1),"Neujahr");
 add(new Date(year,0,6),"Heilige Drei Könige");
 add(new Date(year,4,1),"Tag der Arbeit");
@@ -114,7 +110,6 @@ add(new Date(year,10,1),"Allerheiligen");
 add(new Date(year,11,25),"1. Weihnachtstag");
 add(new Date(year,11,26),"2. Weihnachtstag");
 
-// beweglich
 let goodFriday=new Date(easter); goodFriday.setDate(easter.getDate()-2);
 let easterMon=new Date(easter); easterMon.setDate(easter.getDate()+1);
 let ascension=new Date(easter); ascension.setDate(easter.getDate()+39);
@@ -127,10 +122,10 @@ add(ascension,"Christi Himmelfahrt");
 add(pentecostMon,"Pfingstmontag");
 add(corpusChristi,"Fronleichnam");
 
-return holidays;
+return h;
 }
 
-// ===== PLANER =====
+// ===== HELPERS =====
 function getMonday(d){
 d=new Date(d);
 let day=d.getDay();
@@ -140,12 +135,13 @@ return new Date(d.setDate(diff));
 
 function formatDate(d){return d.toLocaleDateString("de-DE");}
 
+// ===== PLANER =====
 function createDay(name,date){
 let div=document.createElement("div");
 div.className="day";
 
-let holidays=getHolidays(date.getFullYear());
 let dateStr=formatDate(date);
+let holidays=getHolidays(date.getFullYear());
 
 let header=document.createElement("div");
 header.innerText=name+" ("+dateStr+")";
@@ -155,9 +151,7 @@ header.innerText+=" – "+holidays[dateStr];
 div.classList.add("holiday");
 }
 
-// 👉 HEUTE MARKIERUNG
-let today = new Date();
-if(formatDate(today) === dateStr && weekOffset === 0){
+if(formatDate(new Date())===dateStr){
 div.classList.add("today");
 }
 
@@ -224,18 +218,22 @@ function goToday(){weekOffset=0;render();}
 function toggleCalendar(){
 let el=document.getElementById("calendarOverlay");
 el.style.display = (el.style.display==="block") ? "none" : "block";
+if(el.style.display==="block"){
 renderCalendar();
+}
 }
 
 function changeMonth(n){
-calDate.setMonth(calDate.getMonth()+n);
+calDate = new Date(calDate.getFullYear(), calDate.getMonth()+n, 1);
 renderCalendar();
 }
 
 function renderCalendar(){
 let grid=document.getElementById("calendarGrid");
 grid.innerHTML="";
+
 let holidays=getHolidays(calDate.getFullYear());
+let todayStr=formatDate(new Date());
 
 let year=calDate.getFullYear();
 let month=calDate.getMonth();
@@ -244,12 +242,12 @@ document.getElementById("monthTitle").innerText=
 calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
 
 let first=new Date(year,month,1);
-let start=first.getDay()||7;
+let start=(first.getDay()+6)%7;
 let days=new Date(year,month+1,0).getDate();
 
-for(let i=1;i<start;i++) grid.appendChild(document.createElement("div"));
-
-let today = new Date();
+for(let i=0;i<start;i++){
+grid.appendChild(document.createElement("div"));
+}
 
 for(let d=1;d<=days;d++){
 let date=new Date(year,month,d);
@@ -260,21 +258,18 @@ cell.style.padding="6px";
 
 let key=formatDate(date);
 
-// Feiertag
 if(holidays[key]) cell.style.background="#ffcccc";
-
-// Termin
 if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
 
-// 👉 HEUTE (höchste Priorität)
-if(formatDate(date) === formatDate(today)){
-cell.style.border = "2px solid red";
-cell.style.borderRadius = "50%";
+if(key===todayStr){
+cell.style.border="2px solid red";
+cell.style.borderRadius="50%";
 }
 
 cell.onclick=()=>{
-let diff=Math.floor((date-today)/(1000*60*60*24));
-weekOffset=Math.floor(diff/7);
+let mondayClicked = getMonday(date);
+let mondayToday = getMonday(new Date());
+weekOffset = Math.round((mondayClicked - mondayToday)/(1000*60*60*24*7));
 render();
 toggleCalendar();
 };
@@ -283,70 +278,38 @@ grid.appendChild(cell);
 }
 }
 
-// ===== BACKUP =====
-function backup(){
-let data=JSON.stringify(localStorage);
-let blob=new Blob([data],{type:"text/plain"});
-let a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download="backup.txt";
-a.click();
-}
-
-function loadBackup(){
-let input=document.createElement("input");
-input.type="file";
-input.onchange=e=>{
-let reader=new FileReader();
-reader.onload=e=>{
-let data=JSON.parse(e.target.result);
-for(let key in data){localStorage.setItem(key,data[key]);}
-render();
-};
-reader.readAsText(e.target.files[0]);
-};
-input.click();
-}
-
-// ===== BLÄTTERN =====
+// ===== SWIPE =====
 let startX=0,currentX=0,isDragging=false;
-const wrapper=document.getElementById("pageWrapper");
-const shadow=document.getElementById("shadow");
+const book=document.getElementById("book");
 
-document.addEventListener("touchstart",e=>{
+book.addEventListener("touchstart",e=>{
 startX=e.touches[0].clientX;
 isDragging=true;
-wrapper.style.transition="none";
 });
 
-document.addEventListener("touchmove",e=>{
+book.addEventListener("touchmove",e=>{
 if(!isDragging)return;
 currentX=e.touches[0].clientX;
-let diff=currentX-startX;
-
-wrapper.style.transform="translateX("+diff+"px)";
-shadow.style.opacity=Math.min(Math.abs(diff)/150,0.4);
+book.style.transform="translateX("+(currentX-startX)+"px)";
 });
 
-document.addEventListener("touchend",()=>{
+book.addEventListener("touchend",()=>{
 if(!isDragging)return;
 
 let diff=currentX-startX;
-wrapper.style.transition="transform 0.3s ease";
 
 if(diff<-80){
-wrapper.style.transform="translateX(-100%)";
-setTimeout(()=>{changeWeek(1);wrapper.style.transform="translateX(0)";},200);
+book.style.transform="translateX(-100%)";
+setTimeout(()=>{changeWeek(1);book.style.transform="translateX(0)";},200);
 }
 else if(diff>80){
-wrapper.style.transform="translateX(100%)";
-setTimeout(()=>{changeWeek(-1);wrapper.style.transform="translateX(0)";},200);
+book.style.transform="translateX(100%)";
+setTimeout(()=>{changeWeek(-1);book.style.transform="translateX(0)";},200);
 }
 else{
-wrapper.style.transform="translateX(0)";
+book.style.transform="translateX(0)";
 }
 
-shadow.style.opacity=0;
 isDragging=false;
 });
 
