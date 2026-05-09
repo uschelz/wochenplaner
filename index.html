@@ -4,33 +4,44 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wochenplaner</title>
+<link rel="apple-touch-icon" href="./icon.png">
 
 <style>
-body {margin:0;font-family:-apple-system;background:#eaeaea;}
-.header {display:flex;justify-content:space-between;padding:10px;background:white;}
-.book {display:flex;height:calc(100vh - 120px);transition:transform .3s ease;}
+body {margin:0;font-family:-apple-system;background:#eaeaea;overflow:hidden;}
+.header {display:flex;justify-content:space-between;padding:10px;background:white;align-items:center;}
+
+.book {display:flex;height:calc(100vh - 80px);transition: transform 0.3s ease;}
+
 .page {padding:8px;background:white;display:flex;flex-direction:column;gap:8px;}
 .page#left {flex:1.2;}
 .page#right {flex:0.8;}
+
 .spine {width:4px;background:#ccc;}
+
 .day {flex:1;display:flex;flex-direction:column;}
+
 textarea {
 flex:1;border:none;font-size:14px;
 background-image:linear-gradient(to bottom,transparent 95%,#ddd 95%);
 background-size:100% 24px;
 }
+
 .today {outline:2px solid red;}
 .holiday {background:#ffe0e0;}
 .vacation {background:#e6ffe6;}
-.footer {position:fixed;bottom:0;width:100%;background:white;text-align:center;padding:6px;}
+
+button {font-size:16px;padding:6px 10px;}
 </style>
 </head>
 
 <body>
 
-<div id="calendarOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;
-background:rgba(0,0,0,0.5);display:none;z-index:9999;">
-<div style="background:white;margin:60px auto;padding:10px;width:90%;max-width:350px;border-radius:10px;">
+<!-- OVERLAY -->
+<div id="calendarOverlay" style="
+position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.5);
+display:none;z-index:1000;">
+<div style="background:white;margin:50px auto;padding:10px;width:90%;max-width:350px;border-radius:10px;">
 <div style="display:flex;justify-content:space-between;">
 <button onclick="changeMonth(-1)">←</button>
 <div id="monthTitle"></div>
@@ -41,6 +52,7 @@ background:rgba(0,0,0,0.5);display:none;z-index:9999;">
 </div>
 </div>
 
+<!-- HEADER -->
 <div class="header">
 <button onclick="changeWeek(-1)">←</button>
 <div id="title"></div>
@@ -51,64 +63,59 @@ background:rgba(0,0,0,0.5);display:none;z-index:9999;">
 </div>
 </div>
 
+<!-- PLANER -->
 <div class="book" id="book">
 <div class="page" id="left"></div>
 <div class="spine"></div>
 <div class="page" id="right"></div>
 </div>
 
-<div class="footer">
-<button onclick="backup()">💾 Backup</button>
-<button onclick="loadBackup()">📂 Laden</button>
+<!-- BACKUP -->
+<div style="position:fixed;bottom:10px;width:100%;text-align:center;">
+<button onclick="backup()">⚡ Backup</button>
+<button onclick="loadBackup()">Laden</button>
 </div>
 
 <script>
-let weekOffset=0;
-let calDate=new Date();
-let startX=0,currentX=0,isDragging=false;
+let weekOffset = 0;
+let calDate = new Date();
 
-// ===== DATUM NORMALISIEREN =====
-function norm(d){
-let x=new Date(d);
-x.setHours(0,0,0,0);
-return x;
-}
-
-// ===== KEY =====
+// ===== DATUM KEY (STABIL) =====
 function getKey(d){
-return norm(d).toISOString().split("T")[0];
+return new Date(d.getFullYear(),d.getMonth(),d.getDate())
+.toISOString().split("T")[0];
 }
 
 // ===== FEIERTAGE =====
-function getEaster(y){
-let f=Math.floor,G=y%19,C=f(y/100);
+function getEaster(year){
+let f=Math.floor,G=year%19,C=f(year/100);
 let H=(C-f(C/4)-f((8*C+13)/25)+19*G+15)%30;
 let I=H-f(H/28)*(1-f(29/(H+1))*f((21-G)/11));
-let J=(y+f(y/4)+I+2-C+f(C/4))%7;
+let J=(year+f(year/4)+I+2-C+f(C/4))%7;
 let L=I-J;
 let m=3+f((L+40)/44);
 let d=L+28-31*f(m/4);
-return new Date(y,m-1,d);
+return new Date(year,m-1,d);
 }
 
-function getHolidays(y){
-let e=getEaster(y);
+function getHolidays(year){
+let easter=getEaster(year);
 let h={};
 const add=(d,n)=>h[getKey(d)]=n;
 
-add(new Date(y,0,1),"Neujahr");
-add(new Date(y,0,6),"Heilige Drei Könige");
-add(new Date(y,4,1),"Tag der Arbeit");
-add(new Date(y,9,3),"Tag der Deutschen Einheit");
-add(new Date(y,10,1),"Allerheiligen");
-add(new Date(y,11,25),"1. Weihnachtstag");
-add(new Date(y,11,26),"2. Weihnachtstag");
+add(new Date(year,0,1),"Neujahr");
+add(new Date(year,0,6),"Heilige Drei Könige");
+add(new Date(year,4,1),"Tag der Arbeit");
+add(new Date(year,9,3),"Tag der Deutschen Einheit");
+add(new Date(year,10,1),"Allerheiligen");
+add(new Date(year,11,25),"1. Weihnachtstag");
+add(new Date(year,11,26),"2. Weihnachtstag");
 
-let gf=new Date(e);gf.setDate(e.getDate()-2);
-let em=new Date(e);em.setDate(e.getDate()+1);
-let ch=new Date(e);ch.setDate(e.getDate()+39);
-let pm=new Date(e);pm.setDate(e.getDate()+50);
-let fr=new Date(e);fr.setDate(e.getDate()+60);
+let gf=new Date(easter); gf.setDate(easter.getDate()-2);
+let em=new Date(easter); em.setDate(easter.getDate()+1);
+let ch=new Date(easter); ch.setDate(easter.getDate()+39);
+let pm=new Date(easter); pm.setDate(easter.getDate()+50);
+let fr=new Date(easter); fr.setDate(easter.getDate()+60);
 
 add(gf,"Karfreitag");
 add(em,"Ostermontag");
@@ -127,11 +134,10 @@ const vacations=[
 ["2026-08-03","2026-09-14"],
 ["2026-11-02","2026-11-06"],
 ["2026-12-24","2027-01-09"]
-].map(v=>({start:norm(v[0]),end:norm(v[1])}));
+].map(v=>({start:new Date(v[0]),end:new Date(v[1])}));
 
 function isVacation(date){
-let d=norm(date);
-return vacations.some(v=>d>=v.start && d<=v.end);
+return vacations.some(v=>date>=v.start && date<=v.end);
 }
 
 // ===== PLANER =====
@@ -144,6 +150,8 @@ return new Date(d.setDate(diff));
 
 function createDay(name,date){
 let div=document.createElement("div");
+div.className="day";
+
 let key=getKey(date);
 let holidays=getHolidays(date.getFullYear());
 
@@ -180,6 +188,11 @@ let base=new Date();
 base.setDate(base.getDate()+weekOffset*7);
 
 let monday=getMonday(base);
+let sunday=new Date(monday);
+sunday.setDate(monday.getDate()+6);
+
+document.getElementById("title").innerText=
+monday.toLocaleDateString("de-DE")+" – "+sunday.toLocaleDateString("de-DE");
 
 let left=document.getElementById("left");
 let right=document.getElementById("right");
@@ -188,25 +201,40 @@ left.innerHTML="";
 right.innerHTML="";
 
 ["Montag","Dienstag","Mittwoch"].forEach((d,i)=>{
-let date=new Date(monday);date.setDate(monday.getDate()+i);
+let date=new Date(monday);
+date.setDate(monday.getDate()+i);
 left.appendChild(createDay(d,date));
 });
 
 ["Donnerstag","Freitag"].forEach((d,i)=>{
-let date=new Date(monday);date.setDate(monday.getDate()+i+3);
+let date=new Date(monday);
+date.setDate(monday.getDate()+i+3);
 right.appendChild(createDay(d,date));
 });
+
+let weekend=document.createElement("div");
+weekend.style.display="flex";
+weekend.style.flexDirection="column";
+weekend.style.flex="1";
+
+let sat=new Date(monday); sat.setDate(monday.getDate()+5);
+let sun=new Date(monday); sun.setDate(monday.getDate()+6);
+
+weekend.appendChild(createDay("Samstag",sat));
+weekend.appendChild(createDay("Sonntag",sun));
+
+right.appendChild(weekend);
 }
 
-// ===== MINI-KALENDER =====
+// ===== KALENDER =====
 function toggleCalendar(){
 let el=document.getElementById("calendarOverlay");
-el.style.display=(el.style.display==="block")?"none":"block";
+el.style.display = (el.style.display==="block") ? "none" : "block";
 if(el.style.display==="block") renderCalendar();
 }
 
 function changeMonth(n){
-calDate.setMonth(calDate.getMonth()+n);
+calDate = new Date(calDate.getFullYear(), calDate.getMonth()+n, 1);
 renderCalendar();
 }
 
@@ -229,7 +257,7 @@ let key=getKey(date);
 let cell=document.createElement("div");
 cell.innerText=d;
 
-// 🎯 Reihenfolge korrekt
+// 🎯 Reihenfolge
 if(isVacation(date)) cell.style.background="#b6f2b6";
 if(holidays[key]) cell.style.background="#ffcccc";
 if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
@@ -251,6 +279,7 @@ function changeWeek(n){weekOffset+=n;render();}
 function goToday(){weekOffset=0;render();}
 
 // ===== SWIPE =====
+let startX=0,currentX=0,isDragging=false;
 const book=document.getElementById("book");
 
 book.addEventListener("touchstart",e=>{
@@ -260,13 +289,13 @@ isDragging=true;
 });
 
 book.addEventListener("touchmove",e=>{
-if(!isDragging) return;
+if(!isDragging)return;
 currentX=e.touches[0].clientX;
 book.style.transform="translateX("+(currentX-startX)+"px)";
 });
 
 book.addEventListener("touchend",()=>{
-if(!isDragging) return;
+if(!isDragging)return;
 
 let diff=currentX-startX;
 
@@ -302,7 +331,7 @@ input.onchange=e=>{
 let reader=new FileReader();
 reader.onload=e=>{
 let data=JSON.parse(e.target.result);
-for(let key in data) localStorage.setItem(key,data[key]);
+for(let key in data){localStorage.setItem(key,data[key]);}
 render();
 };
 reader.readAsText(e.target.files[0]);
