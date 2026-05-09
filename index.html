@@ -86,7 +86,46 @@ button {font-size:16px;padding:6px 10px;}
 let weekOffset=0;
 let calDate=new Date();
 
-// ===== HELFER =====
+// ===== FEIERTAGE =====
+function getEaster(year){
+let f=Math.floor, G=year%19, C=f(year/100), H=(C-f(C/4)-f((8*C+13)/25)+19*G+15)%30;
+let I=H-f(H/28)*(1-f(29/(H+1))*f((21-G)/11));
+let J=(year+f(year/4)+I+2-C+f(C/4))%7;
+let L=I-J;
+let month=3+f((L+40)/44);
+let day=L+28-31*f(month/4);
+return new Date(year,month-1,day);
+}
+
+function getHolidays(year){
+let easter=getEaster(year);
+let h={};
+const add=(d,n)=>h[d.toLocaleDateString("de-DE")]=n;
+
+add(new Date(year,0,1),"Neujahr");
+add(new Date(year,0,6),"Heilige Drei Könige");
+add(new Date(year,4,1),"Tag der Arbeit");
+add(new Date(year,9,3),"Tag der Deutschen Einheit");
+add(new Date(year,10,1),"Allerheiligen");
+add(new Date(year,11,25),"1. Weihnachtstag");
+add(new Date(year,11,26),"2. Weihnachtstag");
+
+let goodFriday=new Date(easter); goodFriday.setDate(easter.getDate()-2);
+let easterMon=new Date(easter); easterMon.setDate(easter.getDate()+1);
+let ascension=new Date(easter); ascension.setDate(easter.getDate()+39);
+let pentecostMon=new Date(easter); pentecostMon.setDate(easter.getDate()+50);
+let corpusChristi=new Date(easter); corpusChristi.setDate(easter.getDate()+60);
+
+add(goodFriday,"Karfreitag");
+add(easterMon,"Ostermontag");
+add(ascension,"Christi Himmelfahrt");
+add(pentecostMon,"Pfingstmontag");
+add(corpusChristi,"Fronleichnam");
+
+return h;
+}
+
+// ===== HELPERS =====
 function getMonday(d){
 d=new Date(d);
 let day=d.getDay();
@@ -101,13 +140,19 @@ function createDay(name,date){
 let div=document.createElement("div");
 div.className="day";
 
+let holidays=getHolidays(date.getFullYear());
 let dateStr=formatDate(date);
+
 let header=document.createElement("div");
 header.innerText=name+" ("+dateStr+")";
 
-// 👉 HEUTE-Markierung (immer korrekt)
-let today=new Date();
-if(formatDate(today)===dateStr){
+if(holidays[dateStr]){
+header.innerText+=" – "+holidays[dateStr];
+div.classList.add("holiday");
+}
+
+// heute markieren
+if(formatDate(new Date())===dateStr){
 div.classList.add("today");
 }
 
@@ -168,12 +213,7 @@ right.appendChild(weekend);
 }
 
 function changeWeek(n){weekOffset+=n;render();}
-
-// 👉 Heute Button FIX
-function goToday(){
-weekOffset=0;
-render();
-}
+function goToday(){weekOffset=0;render();}
 
 // ===== KALENDER =====
 function toggleCalendar(){
@@ -191,6 +231,9 @@ function renderCalendar(){
 let grid=document.getElementById("calendarGrid");
 grid.innerHTML="";
 
+let holidays=getHolidays(calDate.getFullYear());
+let todayStr=formatDate(new Date());
+
 let year=calDate.getFullYear();
 let month=calDate.getMonth();
 
@@ -203,8 +246,6 @@ let days=new Date(year,month+1,0).getDate();
 
 for(let i=1;i<start;i++) grid.appendChild(document.createElement("div"));
 
-let today=new Date();
-
 for(let d=1;d<=days;d++){
 let date=new Date(year,month,d);
 let cell=document.createElement("div");
@@ -212,14 +253,22 @@ cell.innerText=d;
 cell.style.textAlign="center";
 cell.style.padding="6px";
 
-// 👉 HEUTE im Kalender
-if(formatDate(date)===formatDate(today)){
+let key=formatDate(date);
+
+// Feiertag
+if(holidays[key]) cell.style.background="#ffcccc";
+
+// Eintrag
+if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
+
+// Heute
+if(key===todayStr){
 cell.style.border="2px solid red";
 cell.style.borderRadius="50%";
 }
 
 cell.onclick=()=>{
-let diff=Math.floor((date-today)/(1000*60*60*24));
+let diff=Math.floor((date-new Date())/(1000*60*60*24));
 weekOffset=Math.floor(diff/7);
 render();
 toggleCalendar();
