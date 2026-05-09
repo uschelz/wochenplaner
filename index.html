@@ -9,43 +9,30 @@
 <style>
 body {margin:0;font-family:-apple-system;background:#eaeaea;overflow:hidden;}
 
-.header {
-display:flex;
-justify-content:space-between;
-padding:10px;
-background:white;
-align-items:center;
-}
+.header {display:flex;justify-content:space-between;padding:10px;background:white;align-items:center;}
 
-/* BUCH */
 .book {
-position:relative;
+display:flex;
 height:calc(100vh - 80px);
-perspective:2000px;
-overflow:hidden;
+perspective:1200px;
+position:relative;
 }
 
-.pageContainer {
+.pageWrapper {
 display:flex;
-height:100%;
-position:absolute;
 width:100%;
-backface-visibility:hidden;
+height:100%;
+transform-style:preserve-3d;
+transition:transform 0.4s ease;
 }
 
-.page {
-flex:1;
-padding:8px;
-background:white;
-display:flex;
-flex-direction:column;
-gap:8px;
-}
-
-.left {flex:1.2;}
-.right {flex:0.8;}
+.page {padding:8px;background:white;display:flex;flex-direction:column;gap:8px;backface-visibility:hidden;}
+.page#left {flex:1.2;}
+.page#right {flex:0.8;}
 
 .spine {width:4px;background:#ccc;}
+
+.day {flex:1;display:flex;flex-direction:column;}
 
 textarea {
 flex:1;border:none;font-size:14px;
@@ -55,35 +42,16 @@ background-size:100% 24px;
 
 .today {outline:2px solid red;}
 
-/* BLÄTTERN */
-.flipPage {
+.shadow {
 position:absolute;
-width:50%;
-height:100%;
 top:0;
-left:50%;
-transform-origin:left;
-background:white;
-backface-visibility:hidden;
-box-shadow:0 0 20px rgba(0,0,0,0.2);
-display:none;
-}
-
-.flipBack {
-position:absolute;
+left:0;
 width:100%;
 height:100%;
-transform:rotateY(180deg);
-background:white;
-}
-
-/* OVERLAY */
-#calendarOverlay {
-position:fixed;
-top:0;left:0;width:100%;height:100%;
-background:rgba(0,0,0,0.5);
-display:none;
-z-index:1000;
+background:linear-gradient(to right,rgba(0,0,0,0.2),transparent);
+opacity:0;
+pointer-events:none;
+transition:opacity 0.3s;
 }
 
 button {font-size:16px;padding:6px 10px;}
@@ -91,6 +59,22 @@ button {font-size:16px;padding:6px 10px;}
 </head>
 
 <body>
+
+<!-- OVERLAY -->
+<div id="calendarOverlay" style="
+position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.5);
+display:none;z-index:1000;">
+<div style="background:white;margin:50px auto;padding:10px;width:90%;max-width:350px;border-radius:10px;">
+<div style="display:flex;justify-content:space-between;">
+<button onclick="changeMonth(-1)">←</button>
+<div id="monthTitle"></div>
+<button onclick="changeMonth(1)">→</button>
+</div>
+<div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;"></div>
+<button onclick="toggleCalendar()" style="margin-top:10px;width:100%;">Schließen</button>
+</div>
+</div>
 
 <!-- HEADER -->
 <div class="header">
@@ -103,19 +87,14 @@ button {font-size:16px;padding:6px 10px;}
 </div>
 </div>
 
-<!-- BUCH -->
-<div class="book" id="book">
-
-<div class="pageContainer" id="current">
-<div class="page left" id="left"></div>
+<!-- PLANER -->
+<div class="book">
+<div class="pageWrapper" id="pageWrapper">
+<div class="page" id="left"></div>
 <div class="spine"></div>
-<div class="page right" id="right"></div>
+<div class="page" id="right"></div>
 </div>
-
-<div class="flipPage" id="flip">
-<div class="flipBack" id="flipBack"></div>
-</div>
-
+<div class="shadow" id="shadow"></div>
 </div>
 
 <!-- BACKUP -->
@@ -126,8 +105,9 @@ button {font-size:16px;padding:6px 10px;}
 
 <script>
 let weekOffset=0;
+let calDate=new Date();
 
-// ===== RENDER =====
+// ===== PLANER =====
 function getMonday(d){
 d=new Date(d);
 let day=d.getDay();
@@ -139,6 +119,7 @@ function formatDate(d){return d.toLocaleDateString("de-DE");}
 
 function createDay(name,date){
 let div=document.createElement("div");
+div.className="day";
 
 let header=document.createElement("div");
 header.innerText=name+" ("+formatDate(date)+")";
@@ -148,14 +129,18 @@ let key="plan_"+formatDate(date);
 ta.value=localStorage.getItem(key)||"";
 ta.oninput=()=>localStorage.setItem(key,ta.value);
 
+if(formatDate(new Date())===formatDate(date)&&weekOffset===0){
+div.classList.add("today");
+}
+
 div.appendChild(header);
 div.appendChild(ta);
 return div;
 }
 
-function render(offset){
+function render(){
 let base=new Date();
-base.setDate(base.getDate()+offset*7);
+base.setDate(base.getDate()+weekOffset*7);
 
 let monday=getMonday(base);
 let sunday=new Date(monday);
@@ -181,55 +166,37 @@ let date=new Date(monday);
 date.setDate(monday.getDate()+i+3);
 right.appendChild(createDay(d,date));
 });
+
+let weekend=document.createElement("div");
+weekend.style.display="flex";
+weekend.style.flexDirection="column";
+weekend.style.flex="1";
+
+let sat=new Date(monday);
+sat.setDate(monday.getDate()+5);
+
+let sun=new Date(monday);
+sun.setDate(monday.getDate()+6);
+
+let satDiv=createDay("Samstag",sat);
+let sunDiv=createDay("Sonntag",sun);
+
+satDiv.style.flex="1";
+sunDiv.style.flex="1";
+
+weekend.appendChild(satDiv);
+weekend.appendChild(sunDiv);
+
+right.appendChild(weekend);
 }
 
-// ===== BLÄTTERN =====
-let startX=0;
-let isDragging=false;
-
-const flip=document.getElementById("flip");
-const book=document.getElementById("book");
-
-document.addEventListener("touchstart",e=>{
-startX=e.touches[0].clientX;
-isDragging=true;
-flip.style.display="block";
-});
-
-document.addEventListener("touchmove",e=>{
-if(!isDragging)return;
-let x=e.touches[0].clientX;
-let diff=startX-x;
-
-let angle=Math.min(Math.max(diff/2,0),180);
-flip.style.transform="rotateY("+(-angle)+"deg)";
-});
-
-document.addEventListener("touchend",e=>{
-if(!isDragging)return;
-let x=e.changedTouches[0].clientX;
-let diff=startX-x;
-
-if(diff>80){
-flip.style.transform="rotateY(-180deg)";
-setTimeout(()=>{
-weekOffset++;
-render(weekOffset);
-flip.style.display="none";
-flip.style.transform="rotateY(0deg)";
-},300);
-}else{
-flip.style.transform="rotateY(0deg)";
-setTimeout(()=>flip.style.display="none",200);
-}
-
-isDragging=false;
-});
+function changeWeek(n){weekOffset+=n;render();}
+function goToday(){weekOffset=0;render();}
 
 // ===== BACKUP =====
 function backup(){
 let data=JSON.stringify(localStorage);
-let blob=new Blob([data]);
+let blob=new Blob([data],{type:"text/plain"});
 let a=document.createElement("a");
 a.href=URL.createObjectURL(blob);
 a.download="backup.txt";
@@ -243,16 +210,106 @@ input.onchange=e=>{
 let reader=new FileReader();
 reader.onload=e=>{
 let data=JSON.parse(e.target.result);
-for(let k in data) localStorage.setItem(k,data[k]);
-render(weekOffset);
+for(let key in data){localStorage.setItem(key,data[key]);}
+render();
 };
 reader.readAsText(e.target.files[0]);
 };
 input.click();
 }
 
-// START
-render(weekOffset);
+// ===== KALENDER =====
+function toggleCalendar(){
+let el=document.getElementById("calendarOverlay");
+el.style.display = (el.style.display==="block") ? "none" : "block";
+renderCalendar();
+}
+
+function changeMonth(n){
+calDate.setMonth(calDate.getMonth()+n);
+renderCalendar();
+}
+
+function renderCalendar(){
+let grid=document.getElementById("calendarGrid");
+grid.innerHTML="";
+let year=calDate.getFullYear();
+let month=calDate.getMonth();
+
+document.getElementById("monthTitle").innerText=
+calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
+
+let first=new Date(year,month,1);
+let start=first.getDay()||7;
+let days=new Date(year,month+1,0).getDate();
+
+for(let i=1;i<start;i++) grid.appendChild(document.createElement("div"));
+
+for(let d=1;d<=days;d++){
+let date=new Date(year,month,d);
+let cell=document.createElement("div");
+cell.innerText=d;
+cell.style.textAlign="center";
+cell.style.padding="6px";
+
+let key="plan_"+date.toLocaleDateString("de-DE");
+if(localStorage.getItem(key)) cell.style.background="#a0d8ff";
+
+cell.onclick=()=>{
+let today=new Date();
+let diff=Math.floor((date-today)/(1000*60*60*24));
+weekOffset=Math.floor(diff/7);
+render();
+toggleCalendar();
+};
+
+grid.appendChild(cell);
+}
+}
+
+// ===== REALISTISCHES BLÄTTERN =====
+let startX=0,currentX=0,isDragging=false;
+const wrapper=document.getElementById("pageWrapper");
+const shadow=document.getElementById("shadow");
+
+document.addEventListener("touchstart",e=>{
+startX=e.touches[0].clientX;
+isDragging=true;
+});
+
+document.addEventListener("touchmove",e=>{
+if(!isDragging)return;
+currentX=e.touches[0].clientX;
+let diff=currentX-startX;
+
+let rotate=diff/10;
+wrapper.style.transform="rotateY("+rotate+"deg)";
+
+shadow.style.opacity=Math.min(Math.abs(diff)/200,0.5);
+});
+
+document.addEventListener("touchend",()=>{
+if(!isDragging)return;
+
+let diff=currentX-startX;
+
+if(diff<-80){
+wrapper.style.transform="rotateY(-90deg)";
+setTimeout(()=>{changeWeek(1);wrapper.style.transform="rotateY(0deg)";},200);
+}
+else if(diff>80){
+wrapper.style.transform="rotateY(90deg)";
+setTimeout(()=>{changeWeek(-1);wrapper.style.transform="rotateY(0deg)";},200);
+}
+else{
+wrapper.style.transform="rotateY(0deg)";
+}
+
+shadow.style.opacity=0;
+isDragging=false;
+});
+
+render();
 </script>
 
 </body>
