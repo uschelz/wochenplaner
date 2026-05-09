@@ -325,9 +325,35 @@ cell.style.padding="6px";
 let key=formatDate(date);
 let isVacation=vacations.some(v=>date>=v.start && date<=v.end);
 
-if(isVacation) cell.style.background="#b6f2b6";
-if(holidays[key]) cell.style.background="#ffcccc";
-if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
+let hasEntry = localStorage.getItem("plan_"+key);
+let isHoliday = holidays[key];
+
+// ===== FARBLOGIK =====
+if(isVacation && isHoliday && hasEntry){
+cell.style.background =
+"linear-gradient(135deg,#b6f2b6 33%,#ffcccc 33%,#ffcccc 66%,#a0d8ff 66%)";
+}
+else if(isVacation && hasEntry){
+cell.style.background =
+"linear-gradient(135deg,#b6f2b6 50%,#a0d8ff 50%)";
+}
+else if(isHoliday && hasEntry){
+cell.style.background =
+"linear-gradient(135deg,#ffcccc 50%,#a0d8ff 50%)";
+}
+else if(isVacation && isHoliday){
+cell.style.background =
+"linear-gradient(135deg,#b6f2b6 50%,#ffcccc 50%)";
+}
+else if(isVacation){
+cell.style.background="#b6f2b6";
+}
+else if(isHoliday){
+cell.style.background="#ffcccc";
+}
+else if(hasEntry){
+cell.style.background="#a0d8ff";
+}
 
 cell.onclick=()=>{
 let today=new Date();
