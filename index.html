@@ -136,7 +136,7 @@ add(corpusChristi,"Fronleichnam");
 return h;
 }
 
-// ===== FERIEN KOMPLETT =====
+// ===== FERIEN =====
 function getBavarianHolidays(){
 return [
 ["2026-02-16","2026-02-20"],
@@ -165,19 +165,11 @@ end:new Date(r[1]+"T23:59:59")
 }));
 }
 
-// ===== ROBUSTE FERIENPRÜFUNG =====
 function isVacation(date){
-
-let d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-return getBavarianHolidays().some(v => {
-
-let start = new Date(v.start.getFullYear(), v.start.getMonth(), v.start.getDate());
-let end = new Date(v.end.getFullYear(), v.end.getMonth(), v.end.getDate());
-
-return d >= start && d <= end;
-
-});
+let d = normalize(date);
+return getBavarianHolidays().some(v =>
+d >= normalize(v.start) && d <= normalize(v.end)
+);
 }
 
 // ===== PLANER =====
@@ -191,7 +183,6 @@ return new Date(d.setDate(diff));
 function formatDate(d){return d.toLocaleDateString("de-DE");}
 
 function createDay(name,date){
-
 let div=document.createElement("div");
 div.className="day";
 
@@ -269,102 +260,15 @@ right.appendChild(weekend);
 function changeWeek(n){weekOffset+=n;render();}
 function goToday(){weekOffset=0;render();}
 
-// ===== MINI-KALENDER =====
-function toggleCalendar(){
-let el=document.getElementById("calendarOverlay");
-el.style.display=(el.style.display==="block")?"none":"block";
-if(el.style.display==="block") renderCalendar();
-}
-
-function changeMonth(n){
-calDate=new Date(calDate.getFullYear(),calDate.getMonth()+n,1);
-renderCalendar();
-}
-
-function renderCalendar(){
-let grid=document.getElementById("calendarGrid");
-grid.innerHTML="";
-
-let todayStr=formatDate(new Date());
-
-let year=calDate.getFullYear();
-let month=calDate.getMonth();
-
-document.getElementById("monthTitle").innerText=
-calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
-
-let first=new Date(year,month,1);
-let start=(first.getDay()+6)%7;
-let days=new Date(year,month+1,0).getDate();
-
-for(let i=0;i<start;i++) grid.appendChild(document.createElement("div"));
-
-for(let d=1;d<=days;d++){
-let date=new Date(year,month,d);
-let cell=document.createElement("div");
-cell.innerText=d;
-cell.style.textAlign="center";
-cell.style.padding="6px";
-
-let key=formatDate(date);
-
-if(isVacation(date)) cell.style.background="#b6f2b6";
-
-if(getHolidays(year)[key]) cell.style.background="#ffcccc";
-
-if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
-
-if(key===todayStr){
-cell.style.border="2px solid red";
-cell.style.borderRadius="50%";
-}
-
-cell.onclick=()=>{
-let mondayClicked=getMonday(date);
-let mondayToday=getMonday(new Date());
-weekOffset=Math.round((mondayClicked-mondayToday)/(1000*60*60*24*7));
-render();
-toggleCalendar();
-};
-
-grid.appendChild(cell);
-}
-}
-
-// ===== BACKUP =====
-function backup(){
-let data=JSON.stringify(localStorage);
-let blob=new Blob([data],{type:"text/plain"});
-let a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download="wochenplan_backup.txt";
-a.click();
-}
-
-function loadBackup(){
-let input=document.createElement("input");
-input.type="file";
-
-input.onchange=e=>{
-let reader=new FileReader();
-reader.onload=e=>{
-let data=JSON.parse(e.target.result);
-for(let key in data){
-localStorage.setItem(key,data[key]);
-}
-render();
-};
-reader.readAsText(e.target.files[0]);
-};
-
-input.click();
-}
-
-// ===== SWIPE =====
+// ===== SWIPE FIX =====
 let startX=0,currentX=0,isDragging=false;
 const book=document.getElementById("book");
 
 book.addEventListener("touchstart",e=>{
+if(e.target.tagName==="TEXTAREA"){
+isDragging=false;
+return;
+}
 startX=e.touches[0].clientX;
 isDragging=true;
 });
