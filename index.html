@@ -38,18 +38,23 @@ button {font-size:16px;padding:6px 10px;}
 
 <body>
 
+<!-- MINIKALENDER -->
 <div id="calendarOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;z-index:1000;">
 <div style="background:white;margin:50px auto;padding:10px;width:90%;max-width:350px;border-radius:10px;">
+
 <div style="display:flex;justify-content:space-between;">
 <button onclick="changeMonth(-1)">←</button>
 <div id="monthTitle"></div>
 <button onclick="changeMonth(1)">→</button>
 </div>
+
 <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;"></div>
+
 <button onclick="toggleCalendar()" style="margin-top:10px;width:100%;">Schließen</button>
 </div>
 </div>
 
+<!-- HEADER -->
 <div class="header">
 <button onclick="changeWeek(-1)">←</button>
 <div id="title"></div>
@@ -60,6 +65,7 @@ button {font-size:16px;padding:6px 10px;}
 </div>
 </div>
 
+<!-- PLANER -->
 <div class="book">
 <div class="pageWrapper" id="pageWrapper">
 <div class="page" id="left"></div>
@@ -69,6 +75,7 @@ button {font-size:16px;padding:6px 10px;}
 <div class="shadow" id="shadow"></div>
 </div>
 
+<!-- BACKUP -->
 <div style="position:fixed;bottom:10px;width:100%;text-align:center;">
 <button onclick="backup()">⚡ Backup</button>
 <button onclick="loadBackup()">Laden</button>
@@ -131,7 +138,14 @@ return h;
 // ===== FERIEN =====
 function getVacations(year){
 const ferien={
-2026:[["2026-02-16","2026-02-20"],["2026-03-30","2026-04-10"],["2026-05-26","2026-06-05"],["2026-08-03","2026-09-14"],["2026-11-02","2026-11-06"],["2026-12-24","2027-01-08"]]
+2026:[
+["2026-02-16","2026-02-20"],
+["2026-03-30","2026-04-10"],
+["2026-05-26","2026-06-05"],
+["2026-08-03","2026-09-14"],
+["2026-11-02","2026-11-06"],
+["2026-12-24","2027-01-08"]
+]
 };
 if(!ferien[year]) return [];
 return ferien[year].map(r=>({
@@ -160,7 +174,6 @@ div.classList.add("today");
 let header=document.createElement("div");
 header.innerText=name+" ("+dateStr+")";
 
-/* ⭐ NEU */
 if(isVacation && holidays[dateStr]){
 header.innerText+=" – Ferien – "+holidays[dateStr];
 div.style.background="linear-gradient(135deg,#e6ffe6 50%,#ffe0e0 50%)";
@@ -189,6 +202,11 @@ let base=new Date();
 base.setDate(base.getDate()+weekOffset*7);
 
 let monday=getMonday(base);
+let sunday=new Date(monday);
+sunday.setDate(monday.getDate()+6);
+
+document.getElementById("title").innerText=
+formatDate(monday)+" – "+formatDate(sunday);
 
 let left=document.getElementById("left");
 let right=document.getElementById("right");
@@ -222,7 +240,7 @@ weekend.appendChild(createDay("Sonntag",sun));
 right.appendChild(weekend);
 }
 
-// ===== MINIKALENDER =====
+// ===== MINIKALENDER (jetzt 100% stabil) =====
 function toggleCalendar(){
 let el=document.getElementById("calendarOverlay");
 
@@ -230,7 +248,7 @@ if(el.style.display==="block"){
 el.style.display="none";
 }else{
 el.style.display="block";
-calDate=new Date();
+calDate=new Date(); // immer aktueller Monat
 renderCalendar();
 }
 }
@@ -272,7 +290,6 @@ let isVacation=vacations.some(v=>date>=v.start && date<=v.end);
 let isHoliday=holidays[key];
 let hasEntry=localStorage.getItem("plan_"+key);
 
-/* ⭐ NEU */
 if(isVacation && isHoliday && hasEntry){
 cell.style.background="linear-gradient(135deg,#b6f2b6 33%,#ffcccc 33%,#ffcccc 66%,#a0d8ff 66%)";
 }
@@ -306,21 +323,21 @@ grid.appendChild(cell);
 
 // ===== BACKUP =====
 function backup(){
-let data = JSON.stringify(localStorage);
-let blob = new Blob([data], {type:"text/plain"});
-let a = document.createElement("a");
-a.href = URL.createObjectURL(blob);
-a.download = "backup.txt";
+let data=JSON.stringify(localStorage);
+let blob=new Blob([data],{type:"text/plain"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="backup.txt";
 a.click();
 }
 
 function loadBackup(){
-let input = document.createElement("input");
-input.type = "file";
-input.onchange = e => {
-let reader = new FileReader();
-reader.onload = e => {
-let data = JSON.parse(e.target.result);
+let input=document.createElement("input");
+input.type="file";
+input.onchange=e=>{
+let reader=new FileReader();
+reader.onload=e=>{
+let data=JSON.parse(e.target.result);
 for(let key in data){localStorage.setItem(key,data[key]);}
 render();
 };
