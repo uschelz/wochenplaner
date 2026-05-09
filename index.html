@@ -137,12 +137,27 @@ let div=document.createElement("div");
 let key=getKey(date);
 
 let header=document.createElement("div");
-header.innerText=name+" ("+date.toLocaleDateString("de-DE")+")";
 
 let holidays=getHolidays(date.getFullYear());
 
-if(isVacation(date)) div.classList.add("vacation");
-if(holidays[key]) div.classList.add("holiday");
+let text=name+" ("+date.toLocaleDateString("de-DE")+")";
+
+if(isVacation(date)){
+div.classList.add("vacation");
+text+=" – Ferien";
+}
+
+if(holidays[key]){
+div.classList.add("holiday");
+text+=" – "+holidays[key];
+}
+
+header.innerText=text;
+
+// HEUTE
+if(getKey(new Date())===key){
+div.classList.add("today");
+}
 
 let ta=document.createElement("textarea");
 ta.value=localStorage.getItem("plan_"+key)||"";
@@ -207,7 +222,7 @@ let key=getKey(date);
 let cell=document.createElement("div");
 cell.innerText=d;
 
-// Reihenfolge
+// Reihenfolge korrekt
 if(isVacation(date)) cell.style.background="#b6f2b6";
 if(holidays[key]) cell.style.background="#ffcccc";
 if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
@@ -228,7 +243,7 @@ grid.appendChild(cell);
 function changeWeek(n){weekOffset+=n;render();}
 function goToday(){weekOffset=0;render();}
 
-// ===== SWIPE (WIEDER AKTIV!) =====
+// ===== SWIPE =====
 const book=document.getElementById("book");
 
 book.addEventListener("touchstart",e=>{
