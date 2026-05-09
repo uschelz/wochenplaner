@@ -143,7 +143,7 @@ end: normalize(new Date(r[1]))
 }));
 }
 
-// ===== MINI-KALENDER (FIX) =====
+// ===== MINI-KALENDER =====
 function toggleCalendar(){
 let el=document.getElementById("calendarOverlay");
 
@@ -152,7 +152,7 @@ el.style.display="none";
 }else{
 el.style.display="block";
 
-// 👉 EINZIGE ÄNDERUNG
+// 👉 WICHTIG: immer aktueller Monat
 calDate = new Date();
 
 renderCalendar();
@@ -197,7 +197,7 @@ grid.appendChild(cell);
 }
 }
 
-// ===== REST =====
+// ===== HELPERS =====
 function getMonday(d){
 d=new Date(d);
 let day=d.getDay();
@@ -207,6 +207,7 @@ return new Date(d.setDate(diff));
 
 function formatDate(d){return d.toLocaleDateString("de-DE");}
 
+// ===== PLANER =====
 function createDay(name,date){
 date = normalize(date);
 
@@ -289,6 +290,7 @@ right.appendChild(weekend);
 function changeWeek(n){weekOffset+=n;render();}
 function goToday(){weekOffset=0;render();}
 
+// ===== START =====
 render();
 </script>
 
