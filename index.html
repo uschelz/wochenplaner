@@ -362,9 +362,13 @@ cell.style.background="#a0d8ff";
 }
 
 cell.onclick=()=>{
-let today=new Date();
-let diff=Math.floor((date-today)/(1000*60*60*24));
-weekOffset=Math.floor(diff/7);
+let selectedMonday = getMonday(date);
+let currentMonday = getMonday(new Date());
+
+weekOffset = Math.round(
+(selectedMonday - currentMonday) / (1000*60*60*24*7)
+);
+
 render();
 toggleCalendar();
 };
