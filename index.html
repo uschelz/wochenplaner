@@ -8,13 +8,13 @@
 
 <style>
 body {margin:0;font-family:-apple-system;background:#eaeaea;overflow:hidden;}
+
 .header {display:flex;justify-content:space-between;padding:10px;background:white;align-items:center;}
 
-.book {display:flex;height:calc(100vh - 80px);position:relative;}
-
-.pageWrapper {
-display:flex;width:100%;height:100%;
-transition:transform 0.3s ease;
+.book {
+display:flex;
+height:calc(100vh - 80px);
+transition: transform 0.3s ease;
 }
 
 .page {padding:8px;background:white;display:flex;flex-direction:column;gap:8px;}
@@ -32,13 +32,6 @@ background-size:100% 24px;
 }
 
 .today {outline:2px solid red;}
-.holiday {background:#ffe0e0;}
-
-.shadow {
-position:absolute;top:0;left:0;width:100%;height:100%;
-background:linear-gradient(to right,rgba(0,0,0,0.2),transparent);
-opacity:0;pointer-events:none;
-}
 
 button {font-size:16px;padding:6px 10px;}
 </style>
@@ -46,18 +39,30 @@ button {font-size:16px;padding:6px 10px;}
 
 <body>
 
-<div id="calendarOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;z-index:1000;">
-<div style="background:white;margin:50px auto;padding:10px;width:90%;max-width:350px;border-radius:10px;">
+<!-- OVERLAY KALENDER -->
+<div id="calendarOverlay" style="
+position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.5);
+display:none;z-index:1000;">
+<div style="
+background:white;margin:50px auto;padding:10px;
+width:90%;max-width:350px;border-radius:10px;">
+
 <div style="display:flex;justify-content:space-between;">
 <button onclick="changeMonth(-1)">←</button>
 <div id="monthTitle"></div>
 <button onclick="changeMonth(1)">→</button>
 </div>
-<div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;"></div>
+
+<div id="calendarGrid" style="
+display:grid;grid-template-columns:repeat(7,1fr);
+gap:4px;margin-top:10px;"></div>
+
 <button onclick="toggleCalendar()" style="margin-top:10px;width:100%;">Schließen</button>
 </div>
 </div>
 
+<!-- HEADER -->
 <div class="header">
 <button onclick="changeWeek(-1)">←</button>
 <div id="title"></div>
@@ -68,64 +73,24 @@ button {font-size:16px;padding:6px 10px;}
 </div>
 </div>
 
+<!-- PLANER -->
 <div class="book">
-<div class="pageWrapper" id="pageWrapper">
 <div class="page" id="left"></div>
 <div class="spine"></div>
 <div class="page" id="right"></div>
 </div>
-<div class="shadow" id="shadow"></div>
-</div>
 
+<!-- BACKUP -->
 <div style="position:fixed;bottom:10px;width:100%;text-align:center;">
 <button onclick="backup()">⚡ Backup</button>
 <button onclick="loadBackup()">Laden</button>
 </div>
 
 <script>
-let weekOffset=0;
-let calDate=new Date();
+let weekOffset = 0;
+let calDate = new Date();
 
-// ===== FEIERTAGE =====
-function getEaster(year){
-let f=Math.floor, G=year%19, C=f(year/100), H=(C-f(C/4)-f((8*C+13)/25)+19*G+15)%30;
-let I=H-f(H/28)*(1-f(29/(H+1))*f((21-G)/11));
-let J=(year+f(year/4)+I+2-C+f(C/4))%7;
-let L=I-J;
-let month=3+f((L+40)/44);
-let day=L+28-31*f(month/4);
-return new Date(year,month-1,day);
-}
-
-function getHolidays(year){
-let easter=getEaster(year);
-let h={};
-const add=(d,n)=>h[d.toLocaleDateString("de-DE")]=n;
-
-add(new Date(year,0,1),"Neujahr");
-add(new Date(year,0,6),"Heilige Drei Könige");
-add(new Date(year,4,1),"Tag der Arbeit");
-add(new Date(year,9,3),"Tag der Deutschen Einheit");
-add(new Date(year,10,1),"Allerheiligen");
-add(new Date(year,11,25),"1. Weihnachtstag");
-add(new Date(year,11,26),"2. Weihnachtstag");
-
-let goodFriday=new Date(easter); goodFriday.setDate(easter.getDate()-2);
-let easterMon=new Date(easter); easterMon.setDate(easter.getDate()+1);
-let ascension=new Date(easter); ascension.setDate(easter.getDate()+39);
-let pentecostMon=new Date(easter); pentecostMon.setDate(easter.getDate()+50);
-let corpusChristi=new Date(easter); corpusChristi.setDate(easter.getDate()+60);
-
-add(goodFriday,"Karfreitag");
-add(easterMon,"Ostermontag");
-add(ascension,"Christi Himmelfahrt");
-add(pentecostMon,"Pfingstmontag");
-add(corpusChristi,"Fronleichnam");
-
-return h;
-}
-
-// ===== HELPERS =====
+// ===== PLANER =====
 function getMonday(d){
 d=new Date(d);
 let day=d.getDay();
@@ -135,31 +100,22 @@ return new Date(d.setDate(diff));
 
 function formatDate(d){return d.toLocaleDateString("de-DE");}
 
-// ===== PLANER =====
 function createDay(name,date){
 let div=document.createElement("div");
 div.className="day";
 
-let holidays=getHolidays(date.getFullYear());
-let dateStr=formatDate(date);
-
 let header=document.createElement("div");
-header.innerText=name+" ("+dateStr+")";
-
-if(holidays[dateStr]){
-header.innerText+=" – "+holidays[dateStr];
-div.classList.add("holiday");
-}
-
-// heute markieren
-if(formatDate(new Date())===dateStr){
-div.classList.add("today");
-}
+header.innerText=name+" ("+formatDate(date)+")";
 
 let ta=document.createElement("textarea");
-let key="plan_"+dateStr;
+let key="plan_"+formatDate(date);
 ta.value=localStorage.getItem(key)||"";
+
 ta.oninput=()=>localStorage.setItem(key,ta.value);
+
+if(formatDate(new Date())===formatDate(date)&&weekOffset===0){
+div.classList.add("today");
+}
 
 div.appendChild(header);
 div.appendChild(ta);
@@ -206,8 +162,14 @@ sat.setDate(monday.getDate()+5);
 let sun=new Date(monday);
 sun.setDate(monday.getDate()+6);
 
-weekend.appendChild(createDay("Samstag",sat));
-weekend.appendChild(createDay("Sonntag",sun));
+let satDiv=createDay("Samstag",sat);
+let sunDiv=createDay("Sonntag",sun);
+
+satDiv.style.flex="1";
+sunDiv.style.flex="1";
+
+weekend.appendChild(satDiv);
+weekend.appendChild(sunDiv);
 
 right.appendChild(weekend);
 }
@@ -215,73 +177,10 @@ right.appendChild(weekend);
 function changeWeek(n){weekOffset+=n;render();}
 function goToday(){weekOffset=0;render();}
 
-// ===== KALENDER =====
-function toggleCalendar(){
-let el=document.getElementById("calendarOverlay");
-el.style.display = (el.style.display==="block") ? "none" : "block";
-renderCalendar();
-}
-
-function changeMonth(n){
-calDate.setMonth(calDate.getMonth()+n);
-renderCalendar();
-}
-
-function renderCalendar(){
-let grid=document.getElementById("calendarGrid");
-grid.innerHTML="";
-
-let holidays=getHolidays(calDate.getFullYear());
-let todayStr=formatDate(new Date());
-
-let year=calDate.getFullYear();
-let month=calDate.getMonth();
-
-document.getElementById("monthTitle").innerText=
-calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
-
-let first=new Date(year,month,1);
-let start=first.getDay()||7;
-let days=new Date(year,month+1,0).getDate();
-
-for(let i=1;i<start;i++) grid.appendChild(document.createElement("div"));
-
-for(let d=1;d<=days;d++){
-let date=new Date(year,month,d);
-let cell=document.createElement("div");
-cell.innerText=d;
-cell.style.textAlign="center";
-cell.style.padding="6px";
-
-let key=formatDate(date);
-
-// Feiertag
-if(holidays[key]) cell.style.background="#ffcccc";
-
-// Eintrag
-if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
-
-// Heute
-if(key===todayStr){
-cell.style.border="2px solid red";
-cell.style.borderRadius="50%";
-}
-
-cell.onclick=()=>{
-let diff=Math.floor((date-new Date())/(1000*60*60*24));
-weekOffset=Math.floor(diff/7);
-render();
-toggleCalendar();
-};
-
-grid.appendChild(cell);
-}
-}
-
 // ===== BACKUP =====
 function backup(){
 let data=JSON.stringify(localStorage);
-let blob=new Blob([data]);
+let blob=new Blob([data],{type:"text/plain"});
 let a=document.createElement("a");
 a.href=URL.createObjectURL(blob);
 a.download="backup.txt";
@@ -303,49 +202,97 @@ reader.readAsText(e.target.files[0]);
 input.click();
 }
 
-// ===== BLÄTTERN =====
+// ===== KALENDER =====
+function toggleCalendar(){
+let el=document.getElementById("calendarOverlay");
+el.style.display = (el.style.display==="block") ? "none" : "block";
+renderCalendar();
+}
+
+function changeMonth(n){
+calDate.setMonth(calDate.getMonth()+n);
+renderCalendar();
+}
+
+function renderCalendar(){
+let grid=document.getElementById("calendarGrid");
+grid.innerHTML="";
+
+let year=calDate.getFullYear();
+let month=calDate.getMonth();
+
+document.getElementById("monthTitle").innerText=
+calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
+
+let first=new Date(year,month,1);
+let start=first.getDay()||7;
+let days=new Date(year,month+1,0).getDate();
+
+for(let i=1;i<start;i++){
+grid.appendChild(document.createElement("div"));
+}
+
+for(let d=1;d<=days;d++){
+let date=new Date(year,month,d);
+let cell=document.createElement("div");
+cell.innerText=d;
+cell.style.textAlign="center";
+cell.style.padding="6px";
+
+let key="plan_"+date.toLocaleDateString("de-DE");
+
+if(localStorage.getItem(key)){
+cell.style.background="#a0d8ff";
+}
+
+cell.onclick=()=>{
+let today=new Date();
+let diff=Math.floor((date-today)/(1000*60*60*24));
+weekOffset=Math.floor(diff/7);
+render();
+toggleCalendar();
+};
+
+grid.appendChild(cell);
+}
+}
+
+// ===== SWIPE / BLÄTTERN =====
 let startX=0,currentX=0,isDragging=false;
-const wrapper=document.getElementById("pageWrapper");
-const shadow=document.getElementById("shadow");
+const book=document.querySelector(".book");
 
 document.addEventListener("touchstart",e=>{
 startX=e.touches[0].clientX;
 isDragging=true;
-wrapper.style.transition="none";
 });
 
 document.addEventListener("touchmove",e=>{
 if(!isDragging)return;
 currentX=e.touches[0].clientX;
 let diff=currentX-startX;
-
-wrapper.style.transform="translateX("+diff+"px)";
-shadow.style.opacity=Math.min(Math.abs(diff)/150,0.4);
+book.style.transform="translateX("+diff+"px)";
 });
 
 document.addEventListener("touchend",()=>{
 if(!isDragging)return;
 
 let diff=currentX-startX;
-wrapper.style.transition="transform 0.3s ease";
 
 if(diff<-80){
-wrapper.style.transform="translateX(-100%)";
-setTimeout(()=>{changeWeek(1);wrapper.style.transform="translateX(0)";},200);
+book.style.transform="translateX(-100%)";
+setTimeout(()=>{changeWeek(1);book.style.transform="translateX(0)";},200);
 }
 else if(diff>80){
-wrapper.style.transform="translateX(100%)";
-setTimeout(()=>{changeWeek(-1);wrapper.style.transform="translateX(0)";},200);
+book.style.transform="translateX(100%)";
+setTimeout(()=>{changeWeek(-1);book.style.transform="translateX(0)";},200);
 }
 else{
-wrapper.style.transform="translateX(0)";
+book.style.transform="translateX(0)";
 }
 
-shadow.style.opacity=0;
 isDragging=false;
 });
 
-// START
 render();
 </script>
 
