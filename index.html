@@ -8,20 +8,12 @@
 <style>
 body {margin:0;font-family:-apple-system;background:#eaeaea;overflow:hidden;}
 .header {display:flex;justify-content:space-between;padding:10px;background:white;align-items:center;}
-
 .book {display:flex;height:calc(100vh - 80px);position:relative;}
-
-.pageWrapper {
-display:flex;width:100%;height:100%;
-transition:transform 0.3s ease;
-}
-
+.pageWrapper {display:flex;width:100%;height:100%;transition:transform 0.3s ease;}
 .page {padding:8px;background:white;display:flex;flex-direction:column;gap:8px;}
 .page#left {flex:1.2;}
 .page#right {flex:0.8;}
-
 .spine {width:4px;background:#ccc;}
-
 .day {flex:1;display:flex;flex-direction:column;}
 
 textarea {
@@ -86,7 +78,6 @@ button {font-size:16px;padding:6px 10px;}
 let weekOffset=0;
 let calDate=new Date();
 
-// ===== DATUM NORMALISIEREN =====
 function normalize(d){
 return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
@@ -130,14 +121,19 @@ add(corpusChristi,"Fronleichnam");
 return holidays;
 }
 
-// ===== FERIEN =====
+// ===== FERIEN (ALLE) =====
 function getVacations(year){
 const ferien = {
-2026: [["2026-08-03","2026-09-14"]],
-2027: [["2027-08-02","2027-09-13"]],
-2028: [["2028-07-31","2028-09-11"]],
-2029: [["2029-07-30","2029-09-10"]],
-2030: [["2030-07-29","2030-09-09"]]
+
+2026: [
+["2026-02-16","2026-02-20"], // Winter
+["2026-03-30","2026-04-10"], // Ostern
+["2026-05-26","2026-06-05"], // Pfingsten
+["2026-08-03","2026-09-14"], // Sommer
+["2026-11-02","2026-11-06"], // Herbst
+["2026-12-24","2027-01-08"]  // Weihnachten
+]
+
 };
 
 if(!ferien[year]) return [];
@@ -169,8 +165,7 @@ let dateStr=formatDate(date);
 
 let vacations=[
 ...getVacations(date.getFullYear()),
-...getVacations(date.getFullYear()-1),
-...getVacations(date.getFullYear()+1)
+...getVacations(date.getFullYear()-1)
 ];
 
 let isVacation=vacations.some(v=>date>=v.start && date<=v.end);
@@ -270,8 +265,7 @@ let holidays=getHolidays(calDate.getFullYear());
 
 let vacations=[
 ...getVacations(calDate.getFullYear()),
-...getVacations(calDate.getFullYear()-1),
-...getVacations(calDate.getFullYear()+1)
+...getVacations(calDate.getFullYear()-1)
 ];
 
 let year=calDate.getFullYear();
@@ -346,11 +340,9 @@ reader.readAsText(e.target.files[0]);
 input.click();
 }
 
-// ===== NAVIGATION =====
 function changeWeek(n){weekOffset+=n;render();}
 function goToday(){weekOffset=0;render();}
 
-// START
 render();
 </script>
 
