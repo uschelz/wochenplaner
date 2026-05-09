@@ -4,71 +4,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wochenplaner</title>
-<link rel="apple-touch-icon" href="./icon.png">
 
 <style>
 body {margin:0;font-family:-apple-system;background:#eaeaea;}
-
-.header {display:flex;justify-content:space-between;padding:10px;background:white;align-items:center;}
-
-.book {display:flex;height:calc(100vh - 120px);transition: transform 0.3s ease;}
-
+.header {display:flex;justify-content:space-between;padding:10px;background:white;}
+.book {display:flex;height:calc(100vh - 120px);}
 .page {padding:8px;background:white;display:flex;flex-direction:column;gap:8px;}
 .page#left {flex:1.2;}
 .page#right {flex:0.8;}
-
 .spine {width:4px;background:#ccc;}
-
 .day {flex:1;display:flex;flex-direction:column;}
-
-textarea {
-flex:1;
-border:none;
-font-size:14px;
+textarea {flex:1;border:none;font-size:14px;
 background-image:linear-gradient(to bottom,transparent 95%,#ddd 95%);
-background-size:100% 24px;
-}
-
+background-size:100% 24px;}
 .today {outline:2px solid red;}
 .holiday {background:#ffe0e0;}
 .vacation {background:#e6ffe6;}
-
-.footer {
-position:fixed;
-bottom:0;
-width:100%;
-background:white;
-text-align:center;
-padding:6px;
-}
-
-button {font-size:16px;padding:6px 10px;margin:2px;}
+.footer {position:fixed;bottom:0;width:100%;background:white;text-align:center;padding:6px;}
 </style>
 </head>
 
 <body>
 
-<!-- MINI-KALENDER -->
-<div id="calendarOverlay" style="
-position:fixed;
-top:0;left:0;
-width:100%;height:100%;
-background:rgba(0,0,0,0.5);
-display:none;
-z-index:9999;">
-
+<!-- MINI KALENDER -->
+<div id="calendarOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.5);display:none;z-index:9999;">
 <div style="background:white;margin:60px auto;padding:10px;width:90%;max-width:350px;border-radius:10px;">
-
 <div style="display:flex;justify-content:space-between;">
 <button onclick="changeMonth(-1)">←</button>
 <div id="monthTitle"></div>
 <button onclick="changeMonth(1)">→</button>
 </div>
-
 <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;"></div>
-
 <button onclick="toggleCalendar()" style="margin-top:10px;width:100%;">Schließen</button>
-
 </div>
 </div>
 
@@ -90,15 +58,14 @@ z-index:9999;">
 <div class="page" id="right"></div>
 </div>
 
-<!-- BACKUP -->
 <div class="footer">
 <button onclick="backup()">💾 Backup</button>
 <button onclick="loadBackup()">📂 Laden</button>
 </div>
 
 <script>
-let weekOffset = 0;
-let calDate = new Date();
+let weekOffset=0;
+let calDate=new Date();
 
 // ===== BASIS =====
 function normalize(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
@@ -151,19 +118,7 @@ const vacations=[
 ["2026-05-26","2026-06-06"],
 ["2026-08-03","2026-09-14"],
 ["2026-11-02","2026-11-06"],
-["2026-12-24","2027-01-09"],
-["2027-02-08","2027-02-12"],
-["2027-03-22","2027-04-03"],
-["2027-05-18","2027-05-29"],
-["2027-08-02","2027-09-13"],
-["2027-11-02","2027-11-05"],
-["2027-12-24","2028-01-08"],
-["2028-02-28","2028-03-03"],
-["2028-04-10","2028-04-22"],
-["2028-06-06","2028-06-17"],
-["2028-07-31","2028-09-11"],
-["2028-10-30","2028-11-03"],
-["2028-12-23","2029-01-05"]
+["2026-12-24","2027-01-09"]
 ].map(v=>({start:new Date(v[0]),end:new Date(v[1])}));
 
 function isVacation(date){
@@ -186,10 +141,10 @@ div.className="day";
 let header=document.createElement("div");
 header.innerText=name+" ("+formatDate(date)+")";
 
-if(isVacation(date)){header.innerText+=" – Ferien";div.classList.add("vacation");}
+if(isVacation(date)){div.classList.add("vacation");}
 
-let h=getHolidays(date.getFullYear());
-if(h[formatDate(date)]){header.innerText+=" – "+h[formatDate(date)];div.classList.add("holiday");}
+let holidays=getHolidays(date.getFullYear());
+if(holidays[formatDate(date)]){div.classList.add("holiday");}
 
 if(formatDate(new Date())===formatDate(date)) div.classList.add("today");
 
@@ -228,25 +183,12 @@ left.appendChild(createDay(d,date));
 let date=new Date(monday);date.setDate(monday.getDate()+i+3);
 right.appendChild(createDay(d,date));
 });
-
-let weekend=document.createElement("div");
-weekend.style.display="flex";
-weekend.style.flexDirection="column";
-weekend.style.flex="1";
-
-let sat=new Date(monday);sat.setDate(monday.getDate()+5);
-let sun=new Date(monday);sun.setDate(monday.getDate()+6);
-
-weekend.appendChild(createDay("Samstag",sat));
-weekend.appendChild(createDay("Sonntag",sun));
-
-right.appendChild(weekend);
 }
 
-// ===== MINI-KALENDER FIX =====
+// ===== MINI KALENDER =====
 function toggleCalendar(){
 let el=document.getElementById("calendarOverlay");
-el.style.display = (el.style.display==="block") ? "none" : "block";
+el.style.display=(el.style.display==="block")?"none":"block";
 if(el.style.display==="block") renderCalendar();
 }
 
@@ -259,26 +201,25 @@ function renderCalendar(){
 let grid=document.getElementById("calendarGrid");
 grid.innerHTML="";
 
-let year=calDate.getFullYear();
-let month=calDate.getMonth();
+let holidays=getHolidays(calDate.getFullYear());
 
-document.getElementById("monthTitle").innerText=
-calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
-
-let first=new Date(year,month,1);
+let first=new Date(calDate.getFullYear(),calDate.getMonth(),1);
 let start=(first.getDay()+6)%7;
-let days=new Date(year,month+1,0).getDate();
+let days=new Date(calDate.getFullYear(),calDate.getMonth()+1,0).getDate();
 
 for(let i=0;i<start;i++) grid.appendChild(document.createElement("div"));
 
 for(let d=1;d<=days;d++){
-let date=new Date(year,month,d);
+let date=new Date(calDate.getFullYear(),calDate.getMonth(),d);
 let cell=document.createElement("div");
 cell.innerText=d;
-cell.style.textAlign="center";
-cell.style.padding="6px";
 
+let key=formatDate(date);
+
+// 🎯 Reihenfolge!
 if(isVacation(date)) cell.style.background="#b6f2b6";
+if(holidays[key]) cell.style.background="#ffcccc";
+if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
 
 cell.onclick=()=>{
 let mondayClicked=getMonday(date);
@@ -292,7 +233,7 @@ grid.appendChild(cell);
 }
 }
 
-// ===== NAVIGATION =====
+// ===== NAV =====
 function changeWeek(n){weekOffset+=n;render();}
 function goToday(){weekOffset=0;render();}
 
@@ -320,41 +261,6 @@ reader.readAsText(e.target.files[0]);
 };
 input.click();
 }
-
-// ===== SWIPE =====
-const book=document.getElementById("book");
-
-book.addEventListener("touchstart",e=>{
-if(e.target.closest("textarea")) return;
-startX=e.touches[0].clientX;
-isDragging=true;
-});
-
-book.addEventListener("touchmove",e=>{
-if(!isDragging)return;
-currentX=e.touches[0].clientX;
-book.style.transform="translateX("+(currentX-startX)+"px)";
-});
-
-book.addEventListener("touchend",()=>{
-if(!isDragging)return;
-
-let diff=currentX-startX;
-
-if(diff<-80){
-book.style.transform="translateX(-100%)";
-setTimeout(()=>{changeWeek(1);book.style.transform="translateX(0)";},200);
-}
-else if(diff>80){
-book.style.transform="translateX(100%)";
-setTimeout(()=>{changeWeek(-1);book.style.transform="translateX(0)";},200);
-}
-else{
-book.style.transform="translateX(0)";
-}
-
-isDragging=false;
-});
 
 // START
 render();
