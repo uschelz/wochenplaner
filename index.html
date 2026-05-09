@@ -47,13 +47,89 @@ button {font-size:16px;padding:6px 10px;}
 
 <body>
 
-<!-- (HTML bleibt unverändert gekürzt zur Übersicht) -->
+<div id="calendarOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;z-index:1000;">
+<div style="background:white;margin:50px auto;padding:10px;width:90%;max-width:350px;border-radius:10px;">
+<div style="display:flex;justify-content:space-between;">
+<button onclick="changeMonth(-1)">←</button>
+<div id="monthTitle"></div>
+<button onclick="changeMonth(1)">→</button>
+</div>
+<div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;"></div>
+<button onclick="toggleCalendar()" style="margin-top:10px;width:100%;">Schließen</button>
+</div>
+</div>
+
+<div class="header">
+<button onclick="changeWeek(-1)">←</button>
+<div id="title"></div>
+<button onclick="toggleCalendar()">📅</button>
+<div>
+<button onclick="goToday()">Heute</button>
+<button onclick="changeWeek(1)">→</button>
+</div>
+</div>
+
+<div class="book">
+<div class="pageWrapper" id="pageWrapper">
+<div class="page" id="left"></div>
+<div class="spine"></div>
+<div class="page" id="right"></div>
+</div>
+<div class="shadow" id="shadow"></div>
+</div>
+
+<div style="position:fixed;bottom:10px;width:100%;text-align:center;">
+<button onclick="backup()">⚡ Backup</button>
+<button onclick="loadBackup()">Laden</button>
+</div>
 
 <script>
 let weekOffset=0;
 let calDate=new Date();
 
-// ===== FERIEN (BAYERN BIS 2030) =====
+// ===== FEIERTAGE =====
+function getEaster(year){
+let f=Math.floor, G=year%19, C=f(year/100), H=(C-f(C/4)-f((8*C+13)/25)+19*G+15)%30;
+let I=H-f(H/28)*(1-f(29/(H+1))*f((21-G)/11));
+let J=(year+f(year/4)+I+2-C+f(C/4))%7;
+let L=I-J;
+let month=3+f((L+40)/44);
+let day=L+28-31*f(month/4);
+return new Date(year,month-1,day);
+}
+
+function getHolidays(year){
+let easter=getEaster(year);
+let holidays={};
+
+function add(date,name){
+holidays[date.toLocaleDateString("de-DE")] = name;
+}
+
+add(new Date(year,0,1),"Neujahr");
+add(new Date(year,0,6),"Heilige Drei Könige");
+add(new Date(year,4,1),"Tag der Arbeit");
+add(new Date(year,9,3),"Tag der Deutschen Einheit");
+add(new Date(year,10,1),"Allerheiligen");
+add(new Date(year,11,25),"1. Weihnachtstag");
+add(new Date(year,11,26),"2. Weihnachtstag");
+
+let goodFriday=new Date(easter); goodFriday.setDate(easter.getDate()-2);
+let easterMon=new Date(easter); easterMon.setDate(easter.getDate()+1);
+let ascension=new Date(easter); ascension.setDate(easter.getDate()+39);
+let pentecostMon=new Date(easter); pentecostMon.setDate(easter.getDate()+50);
+let corpusChristi=new Date(easter); corpusChristi.setDate(easter.getDate()+60);
+
+add(goodFriday,"Karfreitag");
+add(easterMon,"Ostermontag");
+add(ascension,"Christi Himmelfahrt");
+add(pentecostMon,"Pfingstmontag");
+add(corpusChristi,"Fronleichnam");
+
+return holidays;
+}
+
+// ===== FERIEN BIS 2030 =====
 function getVacations(year){
 const ferien = {
 
@@ -111,7 +187,58 @@ start: new Date(f[0]),
 end: new Date(f[1])
 }));
 }
-</script>
 
-</body>
-</html>
+// ===== REST IST UNVERÄNDERT =====
+function getMonday(d){
+d=new Date(d);
+let day=d.getDay();
+let diff=d.getDate()-day+(day===0?-6:1);
+return new Date(d.setDate(diff));
+}
+
+function formatDate(d){return d.toLocaleDateString("de-DE");}
+
+function createDay(name,date){
+let div=document.createElement("div");
+div.className="day";
+
+let holidays=getHolidays(date.getFullYear());
+let dateStr=formatDate(date);
+
+let vacations = getVacations(date.getFullYear());
+let isVacation = vacations.some(v => date >= v.start && date <= v.end);
+
+let today = new Date();
+
+if(
+date.getFullYear() === today.getFullYear() &&
+date.getMonth() === today.getMonth() &&
+date.getDate() === today.getDate()
+){
+div.classList.add("today");
+}
+
+let header=document.createElement("div");
+header.innerText=name+" ("+dateStr+")";
+
+if(isVacation){
+header.innerText+=" – Ferien";
+div.classList.add("vacation");
+}
+
+if(holidays[dateStr]){
+header.innerText+=" – "+holidays[dateStr];
+div.classList.add("holiday");
+}
+
+let ta=document.createElement("textarea");
+let key="plan_"+dateStr;
+ta.value=localStorage.getItem(key)||"";
+ta.oninput=()=>localStorage.setItem(key,ta.value);
+
+div.appendChild(header);
+div.appendChild(ta);
+return div;
+}
+
+// (Rest bleibt unverändert)
