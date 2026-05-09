@@ -8,7 +8,6 @@
 
 <style>
 body {margin:0;font-family:-apple-system;background:#eaeaea;overflow:hidden;}
-
 .header {display:flex;justify-content:space-between;padding:10px;background:white;align-items:center;}
 
 .book {display:flex;height:calc(100vh - 120px);transition: transform 0.3s ease;}
@@ -136,45 +135,32 @@ add(corpusChristi,"Fronleichnam");
 return h;
 }
 
-// ===== FERIEN BAYERN =====
-function getBavarianHolidays(year){
-
-const ferien = {
-
-2026: [
+// ===== FERIEN BAYERN KOMPLETT =====
+function getBavarianHolidays(){
+return [
 ["2026-02-16","2026-02-20"],
 ["2026-03-30","2026-04-11"],
 ["2026-05-26","2026-06-06"],
 ["2026-08-03","2026-09-14"],
 ["2026-11-02","2026-11-06"],
-["2026-12-24","2027-01-09"]
-],
+["2026-12-24","2027-01-09"],
 
-2027: [
 ["2027-02-08","2027-02-12"],
 ["2027-03-22","2027-04-03"],
 ["2027-05-18","2027-05-29"],
 ["2027-08-02","2027-09-13"],
 ["2027-11-02","2027-11-05"],
-["2027-12-24","2028-01-08"]
-],
+["2027-12-24","2028-01-08"],
 
-2028: [
 ["2028-02-28","2028-03-03"],
 ["2028-04-10","2028-04-22"],
 ["2028-06-06","2028-06-17"],
 ["2028-07-31","2028-09-11"],
 ["2028-10-30","2028-11-03"],
 ["2028-12-23","2029-01-05"]
-]
-
-};
-
-if(!ferien[year]) return [];
-
-return ferien[year].map(r=>({
-start:normalize(new Date(r[0])),
-end:normalize(new Date(r[1]))
+].map(r=>({
+start:new Date(r[0]+"T00:00:00"),
+end:new Date(r[1]+"T23:59:59")
 }));
 }
 
@@ -188,26 +174,27 @@ return new Date(d.setDate(diff));
 
 function formatDate(d){return d.toLocaleDateString("de-DE");}
 
-function createDay(name,date){
+function isVacation(date){
+let d = normalize(date);
+return getBavarianHolidays().some(v =>
+d >= normalize(v.start) && d <= normalize(v.end)
+);
+}
 
-date=normalize(date);
+function createDay(name,date){
 
 let div=document.createElement("div");
 div.className="day";
 
-let holidays=getHolidays(date.getFullYear());
-let vacations=getBavarianHolidays(date.getFullYear());
-
-let isVacation=vacations.some(v=>date>=v.start && date<=v.end);
-
 let header=document.createElement("div");
 header.innerText=name+" ("+formatDate(date)+")";
 
-if(isVacation){
+if(isVacation(date)){
 header.innerText+=" – Ferien";
 div.classList.add("vacation");
 }
 
+let holidays=getHolidays(date.getFullYear());
 if(holidays[formatDate(date)]){
 header.innerText+=" – "+holidays[formatDate(date)];
 div.classList.add("holiday");
@@ -289,8 +276,6 @@ function renderCalendar(){
 let grid=document.getElementById("calendarGrid");
 grid.innerHTML="";
 
-let holidays=getHolidays(calDate.getFullYear());
-let vacations=getBavarianHolidays(calDate.getFullYear());
 let todayStr=formatDate(new Date());
 
 let year=calDate.getFullYear();
@@ -314,10 +299,9 @@ cell.style.padding="6px";
 
 let key=formatDate(date);
 
-let isVacation=vacations.some(v=>normalize(date)>=v.start && normalize(date)<=v.end);
-if(isVacation) cell.style.background="#b6f2b6";
+if(isVacation(date)) cell.style.background="#b6f2b6";
 
-if(holidays[key]) cell.style.background="#ffcccc";
+if(getHolidays(year)[key]) cell.style.background="#ffcccc";
 
 if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
 
