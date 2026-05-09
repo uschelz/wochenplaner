@@ -55,8 +55,7 @@ width:90%;max-width:350px;border-radius:10px;">
 </div>
 
 <div id="calendarGrid" style="
-display:grid;
-grid-template-columns:repeat(7,1fr);
+display:grid;grid-template-columns:repeat(7,1fr);
 gap:4px;margin-top:10px;"></div>
 
 <button onclick="toggleCalendar()" style="margin-top:10px;width:100%;">Schließen</button>
@@ -123,6 +122,32 @@ add(pentecostMon,"Pfingstmontag");
 add(corpusChristi,"Fronleichnam");
 
 return h;
+}
+
+// ===== FERIEN BAYERN (OFFIZIELL) =====
+function getBavarianHolidays(year){
+
+const ferien = {
+2026: [["16.02.2026","20.02.2026"],["30.03.2026","11.04.2026"],["26.05.2026","06.06.2026"],["03.08.2026","14.09.2026"],["02.11.2026","06.11.2026"],["24.12.2026","09.01.2027"]],
+2027: [["08.02.2027","12.02.2027"],["22.03.2027","03.04.2027"],["18.05.2027","29.05.2027"],["02.08.2027","13.09.2027"],["02.11.2027","05.11.2027"],["24.12.2027","08.01.2028"]],
+2028: [["28.02.2028","03.03.2028"],["10.04.2028","22.04.2028"],["06.06.2028","17.06.2028"],["31.07.2028","11.09.2028"],["30.10.2028","03.11.2028"],["23.12.2028","05.01.2029"]],
+};
+
+let result = [];
+if(!ferien[year]) return result;
+
+ferien[year].forEach(range=>{
+let start = new Date(range[0].split(".").reverse().join("-"));
+let end = new Date(range[1].split(".").reverse().join("-"));
+
+let d = new Date(start);
+while(d <= end){
+result.push(d.toLocaleDateString("de-DE"));
+d.setDate(d.getDate()+1);
+}
+});
+
+return result;
 }
 
 // ===== HELPERS =====
@@ -218,9 +243,7 @@ function goToday(){weekOffset=0;render();}
 function toggleCalendar(){
 let el=document.getElementById("calendarOverlay");
 el.style.display = (el.style.display==="block") ? "none" : "block";
-if(el.style.display==="block"){
-renderCalendar();
-}
+if(el.style.display==="block") renderCalendar();
 }
 
 function changeMonth(n){
@@ -233,6 +256,7 @@ let grid=document.getElementById("calendarGrid");
 grid.innerHTML="";
 
 let holidays=getHolidays(calDate.getFullYear());
+let vacations=getBavarianHolidays(calDate.getFullYear());
 let todayStr=formatDate(new Date());
 
 let year=calDate.getFullYear();
@@ -258,6 +282,7 @@ cell.style.padding="6px";
 
 let key=formatDate(date);
 
+if(vacations.includes(key)) cell.style.background="#b6f2b6";
 if(holidays[key]) cell.style.background="#ffcccc";
 if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
 
