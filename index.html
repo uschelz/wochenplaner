@@ -26,7 +26,6 @@ background-size:100% 24px;
 
 button {font-size:16px;padding:6px 10px;}
 
-/* Mini-Kalender */
 #calendarOverlay {
 position:fixed;top:0;left:0;width:100%;height:100%;
 background:rgba(0,0,0,0.5);
@@ -87,9 +86,9 @@ gap:4px;margin-top:10px;
 let weekOffset=0;
 let calDate=new Date();
 
-// ===== ISO DATE =====
+// ===== ISO DATUM =====
 function getISO(d){
-return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+return new Date(d.getFullYear(),d.getMonth(),d.getDate())
 .toISOString().split("T")[0];
 }
 
@@ -148,6 +147,7 @@ return vacations.some(v=>iso>=v[0] && iso<=v[1]);
 // ===== MINI-KALENDER =====
 function toggleCalendar(){
 let el=document.getElementById("calendarOverlay");
+
 if(el.style.display==="block"){
 el.style.display="none";
 }else{
@@ -167,6 +167,9 @@ let grid=document.getElementById("calendarGrid");
 grid.innerHTML="";
 
 let holidays=getHolidays(calDate.getFullYear());
+
+document.getElementById("monthTitle").innerText=
+calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
 
 let first=new Date(calDate.getFullYear(),calDate.getMonth(),1);
 let start=(first.getDay()+6)%7;
