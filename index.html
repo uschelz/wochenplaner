@@ -7,18 +7,32 @@
 <link rel="apple-touch-icon" href="./icon.png">
 
 <style>
-body {margin:0;font-family:-apple-system;background:#eaeaea;}
+body {margin:0;font-family:-apple-system;background:#eaeaea;overflow:hidden;}
+
 .header {display:flex;justify-content:space-between;padding:10px;background:white;align-items:center;}
-.book {display:flex;height:calc(100vh - 80px);}
+
+.book {
+display:flex;
+height:calc(100vh - 80px);
+transition: transform 0.3s ease;
+}
+
 .page {padding:8px;background:white;display:flex;flex-direction:column;gap:8px;}
 .page#left {flex:1.2;}
 .page#right {flex:0.8;}
+
 .spine {width:4px;background:#ccc;}
+
 .day {flex:1;display:flex;flex-direction:column;}
-textarea {flex:1;border:none;font-size:14px;
+
+textarea {
+flex:1;border:none;font-size:14px;
 background-image:linear-gradient(to bottom,transparent 95%,#ddd 95%);
-background-size:100% 24px;}
+background-size:100% 24px;
+}
+
 .today {outline:2px solid red;}
+
 button {font-size:16px;padding:6px 10px;}
 </style>
 </head>
@@ -137,7 +151,6 @@ date.setDate(monday.getDate()+i+3);
 right.appendChild(createDay(d,date));
 });
 
-// Wochenende untereinander
 let weekend=document.createElement("div");
 weekend.style.display="flex";
 weekend.style.flexDirection="column";
@@ -244,7 +257,42 @@ grid.appendChild(cell);
 }
 }
 
-// START
+// ===== SWIPE / BLÄTTERN =====
+let startX=0,currentX=0,isDragging=false;
+const book=document.querySelector(".book");
+
+document.addEventListener("touchstart",e=>{
+startX=e.touches[0].clientX;
+isDragging=true;
+});
+
+document.addEventListener("touchmove",e=>{
+if(!isDragging)return;
+currentX=e.touches[0].clientX;
+let diff=currentX-startX;
+book.style.transform="translateX("+diff+"px)";
+});
+
+document.addEventListener("touchend",()=>{
+if(!isDragging)return;
+
+let diff=currentX-startX;
+
+if(diff<-80){
+book.style.transform="translateX(-100%)";
+setTimeout(()=>{changeWeek(1);book.style.transform="translateX(0)";},200);
+}
+else if(diff>80){
+book.style.transform="translateX(100%)";
+setTimeout(()=>{changeWeek(-1);book.style.transform="translateX(0)";},200);
+}
+else{
+book.style.transform="translateX(0)";
+}
+
+isDragging=false;
+});
+
 render();
 </script>
 
