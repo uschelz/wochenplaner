@@ -12,7 +12,7 @@ body {margin:0;font-family:-apple-system;background:#eaeaea;overflow:hidden;}
 
 .book {
 display:flex;
-height:calc(100vh - 120px);
+height:calc(100vh - 80px);
 transition: transform 0.3s ease;
 }
 
@@ -34,25 +34,40 @@ background-size:100% 24px;
 .holiday {background:#ffe0e0;}
 .vacation {background:#e6ffe6;}
 
-.footer {
-position:fixed;
-bottom:0;
-width:100%;
-background:white;
-padding:8px;
-text-align:center;
-}
-
-button {font-size:16px;padding:6px 10px;margin:2px;}
+button {font-size:16px;padding:6px 10px;}
 </style>
 </head>
 
 <body>
 
+<!-- OVERLAY -->
+<div id="calendarOverlay" style="
+position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.5);
+display:none;z-index:1000;">
+<div style="
+background:white;margin:50px auto;padding:10px;
+width:90%;max-width:350px;border-radius:10px;">
+
+<div style="display:flex;justify-content:space-between;">
+<button onclick="changeMonth(-1)">←</button>
+<div id="monthTitle"></div>
+<button onclick="changeMonth(1)">→</button>
+</div>
+
+<div id="calendarGrid" style="
+display:grid;grid-template-columns:repeat(7,1fr);
+gap:4px;margin-top:10px;"></div>
+
+<button onclick="toggleCalendar()" style="margin-top:10px;width:100%;">Schließen</button>
+</div>
+</div>
+
 <!-- HEADER -->
 <div class="header">
 <button onclick="changeWeek(-1)">←</button>
 <div id="title"></div>
+<button onclick="toggleCalendar()">📅</button>
 <div>
 <button onclick="goToday()">Heute</button>
 <button onclick="changeWeek(1)">→</button>
@@ -66,16 +81,17 @@ button {font-size:16px;padding:6px 10px;margin:2px;}
 <div class="page" id="right"></div>
 </div>
 
-<!-- BACKUP FOOTER -->
-<div class="footer">
+<!-- BACKUP -->
+<div style="position:fixed;bottom:10px;width:100%;text-align:center;">
 <button onclick="backup()">💾 Backup</button>
 <button onclick="loadBackup()">📂 Laden</button>
 </div>
 
 <script>
 let weekOffset = 0;
+let calDate = new Date();
 
-// ===== DATUM NORMALISIEREN =====
+// ===== NORMALIZE =====
 function normalize(d){
 return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
@@ -156,7 +172,6 @@ div.className="day";
 
 let holidays=getHolidays(date.getFullYear());
 let vacations=getBavarianHolidays(date.getFullYear());
-
 let isVacation = vacations.some(v => date >= v.start && date <= v.end);
 
 let header=document.createElement("div");
@@ -191,6 +206,11 @@ let base=new Date();
 base.setDate(base.getDate()+weekOffset*7);
 
 let monday=getMonday(base);
+let sunday=new Date(monday);
+sunday.setDate(monday.getDate()+6);
+
+document.getElementById("title").innerText=
+formatDate(monday)+" – "+formatDate(sunday);
 
 let left=document.getElementById("left");
 let right=document.getElementById("right");
@@ -230,36 +250,109 @@ right.appendChild(weekend);
 function changeWeek(n){weekOffset+=n;render();}
 function goToday(){weekOffset=0;render();}
 
-// ===== BACKUP =====
-function backup(){
-let data=JSON.stringify(localStorage);
-let blob=new Blob([data],{type:"text/plain"});
-let a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download="wochenplan_backup.txt";
-a.click();
+// ===== KALENDER =====
+function toggleCalendar(){
+let el=document.getElementById("calendarOverlay");
+el.style.display = (el.style.display==="block") ? "none" : "block";
+if(el.style.display==="block") renderCalendar();
 }
 
-function loadBackup(){
-let input=document.createElement("input");
-input.type="file";
-
-input.onchange=e=>{
-let reader=new FileReader();
-reader.onload=e=>{
-let data=JSON.parse(e.target.result);
-for(let key in data){
-localStorage.setItem(key,data[key]);
+function changeMonth(n){
+calDate = new Date(calDate.getFullYear(), calDate.getMonth()+n, 1);
+renderCalendar();
 }
+
+function renderCalendar(){
+let grid=document.getElementById("calendarGrid");
+grid.innerHTML="";
+
+let holidays=getHolidays(calDate.getFullYear());
+let vacations=getBavarianHolidays(calDate.getFullYear());
+let todayStr=formatDate(new Date());
+
+let year=calDate.getFullYear();
+let month=calDate.getMonth();
+
+document.getElementById("monthTitle").innerText=
+calDate.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
+
+let first=new Date(year,month,1);
+let start=(first.getDay()+6)%7;
+let days=new Date(year,month+1,0).getDate();
+
+for(let i=0;i<start;i++){
+grid.appendChild(document.createElement("div"));
+}
+
+for(let d=1;d<=days;d++){
+let date=new Date(year,month,d);
+let cell=document.createElement("div");
+cell.innerText=d;
+cell.style.textAlign="center";
+cell.style.padding="6px";
+
+let key=formatDate(date);
+
+let isVacation = vacations.some(v => normalize(date) >= v.start && normalize(date) <= v.end);
+if(isVacation) cell.style.background="#b6f2b6";
+
+if(holidays[key]) cell.style.background="#ffcccc";
+
+if(localStorage.getItem("plan_"+key)) cell.style.background="#a0d8ff";
+
+if(key===todayStr){
+cell.style.border="2px solid red";
+cell.style.borderRadius="50%";
+}
+
+cell.onclick=()=>{
+let mondayClicked = getMonday(date);
+let mondayToday = getMonday(new Date());
+weekOffset = Math.round((mondayClicked - mondayToday)/(1000*60*60*24*7));
 render();
-};
-reader.readAsText(e.target.files[0]);
+toggleCalendar();
 };
 
-input.click();
+grid.appendChild(cell);
+}
 }
 
-// ===== START =====
+// ===== SWIPE =====
+let startX=0,currentX=0,isDragging=false;
+const book=document.getElementById("book");
+
+book.addEventListener("touchstart",e=>{
+startX=e.touches[0].clientX;
+isDragging=true;
+});
+
+book.addEventListener("touchmove",e=>{
+if(!isDragging)return;
+currentX=e.touches[0].clientX;
+book.style.transform="translateX("+(currentX-startX)+"px)";
+});
+
+book.addEventListener("touchend",()=>{
+if(!isDragging)return;
+
+let diff=currentX-startX;
+
+if(diff<-80){
+book.style.transform="translateX(-100%)";
+setTimeout(()=>{changeWeek(1);book.style.transform="translateX(0)";},200);
+}
+else if(diff>80){
+book.style.transform="translateX(100%)";
+setTimeout(()=>{changeWeek(-1);book.style.transform="translateX(0)";},200);
+}
+else{
+book.style.transform="translateX(0)";
+}
+
+isDragging=false;
+});
+
+// START
 render();
 </script>
 
