@@ -146,7 +146,11 @@ div.className="day";
 
 let holidays=getHolidays(date.getFullYear());
 let dateStr=formatDate(date);
+let todayStr = formatDate(new Date());
 
+if(dateStr === todayStr){
+    div.classList.add("today");
+}
 let header=document.createElement("div");
 header.innerText=name+" ("+dateStr+")";
 
