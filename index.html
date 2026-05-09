@@ -78,13 +78,20 @@ button {font-size:16px;padding:6px 10px;}
 let weekOffset=0;
 let calDate=new Date();
 
-function normalize(d){
-return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+function normalize(d){return new Date(d.getFullYear(), d.getMonth(), d.getDate());}
+function formatDate(d){return d.toLocaleDateString("de-DE");}
+
+function getMonday(d){
+d=new Date(d);
+let day=d.getDay();
+let diff=d.getDate()-day+(day===0?-6:1);
+return new Date(d.setDate(diff));
 }
 
 // ===== FEIERTAGE =====
 function getEaster(year){
-let f=Math.floor, G=year%19, C=f(year/100), H=(C-f(C/4)-f((8*C+13)/25)+19*G+15)%30;
+let f=Math.floor,G=year%19,C=f(year/100);
+let H=(C-f(C/4)-f((8*C+13)/25)+19*G+15)%30;
 let I=H-f(H/28)*(1-f(29/(H+1))*f((21-G)/11));
 let J=(year+f(year/4)+I+2-C+f(C/4))%7;
 let L=I-J;
@@ -95,8 +102,8 @@ return new Date(year,month-1,day);
 
 function getHolidays(year){
 let easter=getEaster(year);
-let holidays={};
-const add=(d,n)=>holidays[d.toLocaleDateString("de-DE")]=n;
+let h={};
+const add=(d,n)=>h[d.toLocaleDateString("de-DE")]=n;
 
 add(new Date(year,0,1),"Neujahr");
 add(new Date(year,0,6),"Heilige Drei Könige");
@@ -106,54 +113,36 @@ add(new Date(year,10,1),"Allerheiligen");
 add(new Date(year,11,25),"1. Weihnachtstag");
 add(new Date(year,11,26),"2. Weihnachtstag");
 
-let goodFriday=new Date(easter); goodFriday.setDate(easter.getDate()-2);
-let easterMon=new Date(easter); easterMon.setDate(easter.getDate()+1);
-let ascension=new Date(easter); ascension.setDate(easter.getDate()+39);
-let pentecostMon=new Date(easter); pentecostMon.setDate(easter.getDate()+50);
-let corpusChristi=new Date(easter); corpusChristi.setDate(easter.getDate()+60);
+let gf=new Date(easter); gf.setDate(easter.getDate()-2);
+let em=new Date(easter); em.setDate(easter.getDate()+1);
+let asc=new Date(easter); asc.setDate(easter.getDate()+39);
+let pm=new Date(easter); pm.setDate(easter.getDate()+50);
+let cc=new Date(easter); cc.setDate(easter.getDate()+60);
 
-add(goodFriday,"Karfreitag");
-add(easterMon,"Ostermontag");
-add(ascension,"Christi Himmelfahrt");
-add(pentecostMon,"Pfingstmontag");
-add(corpusChristi,"Fronleichnam");
+add(gf,"Karfreitag");
+add(em,"Ostermontag");
+add(asc,"Christi Himmelfahrt");
+add(pm,"Pfingstmontag");
+add(cc,"Fronleichnam");
 
-return holidays;
+return h;
 }
 
 // ===== FERIEN =====
 function getVacations(year){
-const ferien = {
-2026: [
-["2026-02-16","2026-02-20"],
-["2026-03-30","2026-04-10"],
-["2026-05-26","2026-06-05"],
-["2026-08-03","2026-09-14"],
-["2026-11-02","2026-11-06"],
-["2026-12-24","2027-01-08"]
-]
+const ferien={
+2026:[["2026-02-16","2026-02-20"],["2026-03-30","2026-04-10"],["2026-05-26","2026-06-05"],["2026-08-03","2026-09-14"],["2026-11-02","2026-11-06"],["2026-12-24","2027-01-08"]]
 };
-
 if(!ferien[year]) return [];
-
 return ferien[year].map(r=>({
-start: normalize(new Date(r[0])),
-end: normalize(new Date(r[1]))
+start:normalize(new Date(r[0])),
+end:normalize(new Date(r[1]))
 }));
 }
 
 // ===== PLANER =====
-function getMonday(d){
-d=new Date(d);
-let day=d.getDay();
-let diff=d.getDate()-day+(day===0?-6:1);
-return new Date(d.setDate(diff));
-}
-
-function formatDate(d){return d.toLocaleDateString("de-DE");}
-
 function createDay(name,date){
-date = normalize(date);
+date=normalize(date);
 
 let div=document.createElement("div");
 div.className="day";
@@ -164,8 +153,7 @@ let dateStr=formatDate(date);
 let vacations=[...getVacations(date.getFullYear()),...getVacations(date.getFullYear()-1)];
 let isVacation=vacations.some(v=>date>=v.start && date<=v.end);
 
-let today=new Date();
-if(formatDate(today)===dateStr){
+if(formatDate(new Date())===dateStr){
 div.classList.add("today");
 }
 
@@ -257,7 +245,6 @@ let grid=document.getElementById("calendarGrid");
 grid.innerHTML="";
 
 let holidays=getHolidays(calDate.getFullYear());
-
 let vacations=[...getVacations(calDate.getFullYear()),...getVacations(calDate.getFullYear()-1)];
 
 let year=calDate.getFullYear();
@@ -323,36 +310,27 @@ let data = JSON.stringify(localStorage);
 let blob = new Blob([data], {type:"text/plain"});
 let a = document.createElement("a");
 a.href = URL.createObjectURL(blob);
-a.download = "wochenplan_backup.txt";
+a.download = "backup.txt";
 a.click();
 }
 
 function loadBackup(){
 let input = document.createElement("input");
 input.type = "file";
-
 input.onchange = e => {
 let reader = new FileReader();
-
 reader.onload = e => {
 let data = JSON.parse(e.target.result);
-
-for(let key in data){
-localStorage.setItem(key, data[key]);
-}
-
+for(let key in data){localStorage.setItem(key,data[key]);}
 render();
 };
-
 reader.readAsText(e.target.files[0]);
 };
-
 input.click();
 }
 
-// ===== WISCH-FUNKTION =====
+// ===== SWIPE =====
 let startX=0,currentX=0,isDragging=false;
-
 const wrapper=document.getElementById("pageWrapper");
 const shadow=document.getElementById("shadow");
 
@@ -364,34 +342,25 @@ wrapper.style.transition="none";
 });
 
 document.addEventListener("touchmove",e=>{
-if(!isDragging) return;
-
+if(!isDragging)return;
 currentX=e.touches[0].clientX;
 let diff=currentX-startX;
-
 wrapper.style.transform="translateX("+diff+"px)";
 shadow.style.opacity=Math.min(Math.abs(diff)/150,0.4);
 });
 
 document.addEventListener("touchend",()=>{
-if(!isDragging) return;
-
+if(!isDragging)return;
 let diff=currentX-startX;
 wrapper.style.transition="transform 0.3s ease";
 
-if(diff < -80){
+if(diff<-80){
 wrapper.style.transform="translateX(-100%)";
-setTimeout(()=>{
-changeWeek(1);
-wrapper.style.transform="translateX(0)";
-},200);
+setTimeout(()=>{changeWeek(1);wrapper.style.transform="translateX(0)";},200);
 }
-else if(diff > 80){
+else if(diff>80){
 wrapper.style.transform="translateX(100%)";
-setTimeout(()=>{
-changeWeek(-1);
-wrapper.style.transform="translateX(0)";
-},200);
+setTimeout(()=>{changeWeek(-1);wrapper.style.transform="translateX(0)";},200);
 }
 else{
 wrapper.style.transform="translateX(0)";
@@ -404,7 +373,6 @@ isDragging=false;
 function changeWeek(n){weekOffset+=n;render();}
 function goToday(){weekOffset=0;render();}
 
-// START
 render();
 </script>
 
