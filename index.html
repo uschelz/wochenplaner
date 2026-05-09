@@ -1,85 +1,4 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wochenplaner</title>
-<link rel="apple-touch-icon" href="./icon.png">
-
-<style>
-body {margin:0;font-family:-apple-system;background:#eaeaea;overflow:hidden;}
-.header {display:flex;justify-content:space-between;padding:10px;background:white;align-items:center;}
-
-.book {
-display:flex;
-height:calc(100vh - 80px);
-transition: transform 0.3s ease;
-}
-
-.page {padding:8px;background:white;display:flex;flex-direction:column;gap:8px;}
-.page#left {flex:1.2;}
-.page#right {flex:0.8;}
-
-.spine {width:4px;background:#ccc;}
-
-.day {flex:1;display:flex;flex-direction:column;}
-
-textarea {
-flex:1;border:none;font-size:14px;
-background-image:linear-gradient(to bottom,transparent 95%,#ddd 95%);
-background-size:100% 24px;
-}
-
-.today {outline:2px solid red;}
-.holiday {background:#ffe0e0;}
-
-button {font-size:16px;padding:6px 10px;}
-</style>
-</head>
-
-<body>
-
-<!-- OVERLAY -->
-<div id="calendarOverlay" style="
-position:fixed;top:0;left:0;width:100%;height:100%;
-background:rgba(0,0,0,0.5);
-display:none;z-index:1000;">
-<div style="
-background:white;margin:50px auto;padding:10px;
-width:90%;max-width:350px;border-radius:10px;">
-
-<div style="display:flex;justify-content:space-between;">
-<button onclick="changeMonth(-1)">←</button>
-<div id="monthTitle"></div>
-<button onclick="changeMonth(1)">→</button>
-</div>
-
-<div id="calendarGrid" style="
-display:grid;grid-template-columns:repeat(7,1fr);
-gap:4px;margin-top:10px;"></div>
-
-<button onclick="toggleCalendar()" style="margin-top:10px;width:100%;">Schließen</button>
-</div>
-</div>
-
-<!-- HEADER -->
-<div class="header">
-<button onclick="changeWeek(-1)">←</button>
-<div id="title"></div>
-<button onclick="toggleCalendar()">📅</button>
-<div>
-<button onclick="goToday()">Heute</button>
-<button onclick="changeWeek(1)">→</button>
-</div>
-</div>
-
-<!-- PLANER -->
-<div class="book" id="book">
-<div class="page" id="left"></div>
-<div class="spine"></div>
-<div class="page" id="right"></div>
-</div>
-
+<!-- NUR DIE SCRIPT-SEKTION IST KORRIGIERT -->
 <script>
 let weekOffset = 0;
 let calDate = new Date();
@@ -227,7 +146,6 @@ function changeMonth(n){
 calDate = new Date(calDate.getFullYear(), calDate.getMonth()+n, 1);
 renderCalendar();
 }
-}
 
 function renderCalendar(){
 let grid=document.getElementById("calendarGrid");
@@ -267,12 +185,11 @@ cell.style.border="2px solid red";
 cell.style.borderRadius="50%";
 }
 
+// 👉 FIX: richtige Woche berechnen
 cell.onclick=()=>{
-
 let clickedMonday = getMonday(date);
 let todayMonday = getMonday(new Date());
 
-// Differenz in Wochen
 let diffWeeks = Math.round((clickedMonday - todayMonday)/(1000*60*60*24*7));
 
 weekOffset = diffWeeks;
@@ -285,7 +202,7 @@ grid.appendChild(cell);
 }
 }
 
-// ===== SWIPE NUR IM PLANER =====
+// ===== SWIPE =====
 let startX=0,currentX=0,isDragging=false;
 const book=document.getElementById("book");
 
@@ -324,6 +241,3 @@ isDragging=false;
 // START
 render();
 </script>
-
-</body>
-</html>
