@@ -4,7 +4,11 @@ const FILES_TO_CACHE = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./icon.png"
+  "./icon-blau.png"
+  "./icon-dunkelblau.png"
+  "./icon-dunkelgruen.png"
+  "./icon-rot.png"
+  "./icon-olivgruen.png"
 ];
 
 self.addEventListener("install", function (event) {
