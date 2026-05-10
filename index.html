@@ -483,13 +483,19 @@ function goToday(){weekOffset=0;render();}
 render();
 </script>
 
-  <script>
+<script>
 function setIcon(iconDatei) {
   localStorage.setItem("gewaehltesIcon", iconDatei);
+  localStorage.setItem("iconAuswahlGetroffen", "ja");
 
   const iconLink = document.getElementById("appIcon");
   if (iconLink) {
     iconLink.href = iconDatei;
+  }
+
+  const iconAuswahl = document.getElementById("iconAuswahl");
+  if (iconAuswahl) {
+    iconAuswahl.style.display = "none";
   }
 
   alert("Icon ausgewählt. Damit es auf dem Home-Bildschirm erscheint, lösche das alte Symbol vom Home-Bildschirm und füge die App danach erneut über Safari hinzu.");
@@ -502,9 +508,16 @@ window.addEventListener("load", function () {
   if (iconLink) {
     iconLink.href = gespeichertesIcon;
   }
-});
-</script>  
 
+  const iconAuswahlGetroffen = localStorage.getItem("iconAuswahlGetroffen");
+  const iconAuswahl = document.getElementById("iconAuswahl");
+
+  if (iconAuswahlGetroffen === "ja" && iconAuswahl) {
+    iconAuswahl.style.display = "none";
+  }
+});
+</script>
+  
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
