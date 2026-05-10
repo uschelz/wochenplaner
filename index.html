@@ -80,13 +80,13 @@ button {font-size:16px;padding:6px 10px;}
 <button onclick="backup()">⚡ Backup</button>
 <button onclick="loadBackup()">Laden</button>
 </div>
-<div style="position:fixed;bottom:50px;width:100%;text-align:center;font-size:12px;">
+<div id="iconAuswahl" style="position:fixed;bottom:50px;width:100%;text-align:center;font-size:12px;">
   <button onclick="setIcon('icon-blau.png')">Blau</button>
   <button onclick="setIcon('icon-dunkelblau.png')">Dunkelblau</button>
   <button onclick="setIcon('icon-dunkelgruen.png')">Dunkelgrün</button>
   <button onclick="setIcon('icon-olivgruen.png')">Olivgrün</button>
   <button onclick="setIcon('icon-rot.png')">Rot</button>
-</div> 
+</div>
 <script>
 let weekOffset=0;
 let calDate=new Date();
