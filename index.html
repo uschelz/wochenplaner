@@ -80,7 +80,13 @@ button {font-size:16px;padding:6px 10px;}
 <button onclick="backup()">⚡ Backup</button>
 <button onclick="loadBackup()">Laden</button>
 </div>
-  
+<div style="position:fixed;bottom:50px;width:100%;text-align:center;font-size:12px;">
+  <button onclick="setIcon('icon-blau.png')">Blau</button>
+  <button onclick="setIcon('icon-dunkelblau.png')">Dunkelblau</button>
+  <button onclick="setIcon('icon-dunkelgruen.png')">Dunkelgrün</button>
+  <button onclick="setIcon('icon-olivgruen.png')">Olivgrün</button>
+  <button onclick="setIcon('icon-rot.png')">Rot</button>
+</div> 
 <script>
 let weekOffset=0;
 let calDate=new Date();
@@ -476,6 +482,28 @@ function goToday(){weekOffset=0;render();}
 // START
 render();
 </script>
+
+  <script>
+function setIcon(iconDatei) {
+  localStorage.setItem("gewaehltesIcon", iconDatei);
+
+  const iconLink = document.getElementById("appIcon");
+  if (iconLink) {
+    iconLink.href = iconDatei;
+  }
+
+  alert("Icon ausgewählt. Damit es auf dem Home-Bildschirm erscheint, lösche das alte Symbol vom Home-Bildschirm und füge die App danach erneut über Safari hinzu.");
+}
+
+window.addEventListener("load", function () {
+  const gespeichertesIcon = localStorage.getItem("gewaehltesIcon") || "icon-blau.png";
+
+  const iconLink = document.getElementById("appIcon");
+  if (iconLink) {
+    iconLink.href = gespeichertesIcon;
+  }
+});
+</script>  
 
 <script>
 if ("serviceWorker" in navigator) {
